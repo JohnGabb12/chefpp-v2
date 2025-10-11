@@ -8,18 +8,27 @@ using namespace std;
 
 class App {
 private:
+    // vars
 
 public:
     // no need for constructor
 
     void introduction() {
-        cout << "Welcome to Chef++";
+        cout << "Welcome to Chef++" << endl;
+    }
+    
+    void close() {
+        cout << endl << "Press enter to stop program...";
+        cin.get();
     }
 
     void start() {
         introduction();
-        
+
+        // main logic
     }
+
+    
 };
 
 

@@ -3,16 +3,11 @@
 
 using namespace std;
 
-void appclose() {
-    cout << endl << "Press enter to stop program...";
-    cin.get();
-}
-
 int main() {
-    App app; 
-    
-    app.start(); // seperate controller for app
+    App app;
 
-    appclose();
+    app.start(); // separate controller for app
+
+    app.close();
     return 0;
 }
