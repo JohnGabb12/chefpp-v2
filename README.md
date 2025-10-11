@@ -1,12 +1,12 @@
 # chefpp-v2
-CLI application for managing your recipes
+CLI application for managing your recipes<br>
 Made with care imo
 
 # Development
 ## Requirements
 If you are planning to help with this, here are the requirements:
 - Knowledge in using git
-- MSVC (Compiler)
+- MSVC, g++ (or any compiler)
 - IDE (Ofc)
 - No online compiler please
 - Pull request for changes
