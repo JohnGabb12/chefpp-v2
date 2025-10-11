@@ -1,4 +1,5 @@
 #include <iostream>
+#include "app.h"
 
 using namespace std;
 
@@ -8,7 +9,10 @@ void appclose() {
 }
 
 int main() {
-    cout << "Hello, World!" << endl;
+    App app; 
+    
+    app.start(); // seperate controller for app
+
     appclose();
     return 0;
 }
