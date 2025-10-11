@@ -1,6 +1,5 @@
 # chefpp-v2
-CLI application for managing your recipes<br>
-Made with care imo
+CLI application for managing your recipes<br>Made with care imo
 
 # Development
 ## Requirements
