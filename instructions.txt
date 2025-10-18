@@ -1,0 +1,10 @@
+
+vendor folder
+- Header files
+- Contains base classes
+
+build folder
+- build files to run
+
+src folder
+- source files
