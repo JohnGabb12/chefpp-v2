@@ -23,16 +23,6 @@ private:
             "Exit"
         });
         hr();
-    }
-
-public:
-    const string appName = "Chef++";
-
-    MainApp() : App() {}
-
-    void controller()
-    {
-        this->mainMenu();
         int choice = inputi("Select an option: ");
         switch (choice)
         {
@@ -55,6 +45,16 @@ public:
             coutln("Invalid option");
             break;
         }
+    }
+
+public:
+    const string appName = "Chef++";
+
+    MainApp() : App() {}
+
+    void controller()
+    {
+        this->mainMenu();
     }
 
     // Start

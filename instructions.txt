@@ -8,3 +8,150 @@ build folder
 
 src folder
 - source files
+
+
+
+Sample Output:
+
+===========================================
+        Welcome to Chef++ v1.0!
+===========================================
+Cooking should be a joy, not a chore.
+Your kitchen — now compiled.
+
+Main Menu:
+1. Recipe Manager
+2. Pantry Inventory Manager
+3. Meal Planner
+4. Grocery List Generator
+5. Exit
+
+Enter your choice: 1
+
+
+
+========== RECIPE MANAGER ==========
+Options:
+1. Add Recipe
+2. View Recipes
+3. Search Recipe
+4. Delete Recipe
+5. Check Ingredients
+6. Back
+
+Enter your choice: 1
+
+-------------------------------------------
+
+Enter recipe name: Spaghetti Bolognee
+Enter ingredients (comma-separated): spaghetti, ground beef, tomato sauce, onion, garlic
+Enter instructions: Boil spaghetti. Cook beef with sauce and spices. Mix and serve.
+
++-----------------------------------------+
+
+Recipe: Spaghetti Bolognee
+
+Ingredients: 
+- spaghetti
+- ground beef
+- tomato sauce
+- onion
+- garlic
+
+Boil spaghetti. Cook beef with sauce and spices. Mix and serve.
+
++-----------------------------------------+
+
+Are you sure? (y/n): n
+
+What do you want to change:
+1. Recipe name
+2. Ingredients
+3. instructions
+4. None
+Enter your choice: 1
+
+Recipe name: Spaghetti Bolognese
+Recipe 'Spaghetti Bolognese' changed successfully!
+
++-----------------------------------------+
+
+Recipe: Spaghetti Bolognese
+
+Ingredients: 
+- spaghetti
+- ground beef
+- tomato sauce
+- onion
+- garlic
+
+Boil spaghetti. Cook beef with sauce and spices. Mix and serve.
+
++-----------------------------------------+
+
+Are you sure? (y/n): y
+Recipe 'Spaghetti Bolognee' added successfully!
+
+
+
+========== RECIPE MANAGER ==========
+Options:
+1. Add Recipe
+2. View Recipes
+3. Search Recipe
+4. Delete Recipe
+5. Check Ingredients
+6. Back
+
+Enter your choice: 2
+
+-------------------------------------------
+
+Recipes (10 recipes/page)
+1. Spaghetti Bolognese
+Page 1/1
+
+
+Options:
+1. View Recipe
+2. Next Page
+3. Previous Page
+4. Back
+
+Enter your choice: 1
+Which recipe?: 1
+
++-----------------------------------------+
+
+Recipe: Spaghetti Bolognese
+
+Ingredients: 
+- spaghetti
+- ground beef
+- tomato sauce
+- onion
+- garlic
+
+Boil spaghetti. Cook beef with sauce and spices. Mix and serve.
+
++-----------------------------------------+
+
+Options:
+1. View Recipe
+2. Back to Recipes
+3. Back to Recipe Manager
+
+Enter your choice: 3
+
+
+
+========== RECIPE MANAGER ==========
+Options:
+1. Add Recipe
+2. View Recipes
+3. Search Recipe
+4. Delete Recipe
+5. Check Ingredients
+6. Back
+
+Enter your choice: 3
