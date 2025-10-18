@@ -1,6 +1,8 @@
 #ifndef APP_H // for no dup def
 #define APP_H
 #include <iostream>
+#include <string>
+#include <vector>
 /*
 
 App class for controlling the application
@@ -16,6 +18,28 @@ public:
     virtual void close() {
         std::cout << "Press any key to exit..." << std::endl;
         std::cin.get();
+    }
+
+    void coutln(const std::string& toOutput) {
+        std::cout << toOutput << std::endl;
+    }
+
+    int inputi(const std::string& prompt) {
+        int input;
+        std::cout << prompt;
+        std::cin >> input;
+        std::cin.ignore(); // clear newline
+        return input;
+    }
+
+    void hr() {
+        std::cout << "----------------" << std::endl;
+    }
+
+    void displayChoices(const std::vector<std::string>& choices) {
+        for (size_t i = 0; i < choices.size(); ++i) {
+            std::cout << (i + 1) << ". " << choices[i] << std::endl;
+        }
     }
 };
 
