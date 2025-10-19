@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <limits>
+#include <cctype>
 #include <cstdlib>
 
 struct Out {
@@ -76,6 +77,33 @@ struct Out {
         return inputi("");
     }
 
+    // Read a full line string input
+    std::string inputs(const std::string& prompt) const {
+        if (!prompt.empty()) {
+            std::cout << prompt;
+        }
+        std::string s;
+        std::getline(std::cin, s);
+        return s;
+    }
+
+    // Prompt for yes/no and return true for 'y'/'Y', false for 'n'/'N'
+    bool inputYesNo(const std::string& prompt) const {
+        while (true) {
+            if (!prompt.empty()) {
+                std::cout << prompt;
+            }
+            std::string s;
+            std::getline(std::cin, s);
+            if (!s.empty()) {
+                char c = static_cast<char>(std::tolower(static_cast<unsigned char>(s[0])));
+                if (c == 'y') return true;
+                if (c == 'n') return false;
+            }
+            std::cout << "Please enter 'y' or 'n'." << std::endl;
+        }
+    }
+
     void clear() const {
     #if defined(_WIN32) || defined(_WIN64)
         system("cls");
@@ -84,31 +112,120 @@ struct Out {
     #endif
     }
 
+    std::string center(const std::string& toOutput, int width) const {
+        int len = static_cast<int>(toOutput.length());
+        if (len >= width) {
+            return toOutput; // No centering needed
+        }
+        int padding = (width - len) / 2;
+        return std::string(padding, ' ') + toOutput;
+    }
+
     void header(std::string toOutput)
     {
         const int borderWidth = 43; // Width of the border line
         this->coutln("===========================================");
-        
-        // Calculate padding for centering
+        this->coutln(this->center(toOutput, borderWidth));
+        this->coutln("===========================================");
+    }
+
+    void subheader(const std::string& toOutput)
+    {
+        const int borderWidth = 43;
+        this->coutln(std::string(borderWidth, '-'));
         int textLen = static_cast<int>(toOutput.length());
         int totalPadding = borderWidth - textLen;
         int leftPadding = totalPadding / 2;
         int rightPadding = totalPadding - leftPadding;
-        
-        // Ensure non-negative padding
         if (leftPadding < 0) leftPadding = 0;
         if (rightPadding < 0) rightPadding = 0;
-        
-        // Print centered text
         std::string centeredLine = std::string(leftPadding, ' ') + toOutput + std::string(rightPadding, ' ');
         this->coutln(centeredLine);
-        
-        this->coutln("===========================================");
+        this->coutln(std::string(borderWidth, '-'));
     }
+
+    // Note: single overload to avoid ambiguity
 
     void br()
     {
         std::cout << std::endl;
+    }
+
+    // JSON utility methods
+    std::string escapeJson(const std::string& s) const {
+        std::string result;
+        for (char c : s) {
+            if (c == '"') result += "\\\"";
+            else if (c == '\\') result += "\\\\";
+            else if (c == '\n') result += "\\n";
+            else if (c == '\r') result += "\\r";
+            else if (c == '\t') result += "\\t";
+            else result += c;
+        }
+        return result;
+    }
+
+    std::string unescapeJson(const std::string& s) const {
+        std::string result;
+        for (size_t i = 0; i < s.length(); ++i) {
+            if (s[i] == '\\' && i + 1 < s.length()) {
+                char next = s[i + 1];
+                if (next == '"' || next == '\\' || next == '/') result += next;
+                else if (next == 'n') result += '\n';
+                else if (next == 'r') result += '\r';
+                else if (next == 't') result += '\t';
+                else result += next;
+                ++i;
+            } else {
+                result += s[i];
+            }
+        }
+        return result;
+    }
+
+    std::string extractJsonString(const std::string& json, const std::string& key) const {
+        std::string searchKey = "\"" + key + "\"";
+        size_t pos = json.find(searchKey);
+        if (pos == std::string::npos) return "";
+        pos = json.find(":", pos);
+        if (pos == std::string::npos) return "";
+        pos = json.find("\"", pos);
+        if (pos == std::string::npos) return "";
+        size_t end = pos + 1;
+        while (end < json.length()) {
+            if (json[end] == '"' && (end == 0 || json[end - 1] != '\\')) break;
+            ++end;
+        }
+        return unescapeJson(json.substr(pos + 1, end - pos - 1));
+    }
+
+    std::vector<std::string> extractJsonArray(const std::string& json, const std::string& key) const {
+        std::vector<std::string> result;
+        std::string searchKey = "\"" + key + "\"";
+        size_t pos = json.find(searchKey);
+        if (pos == std::string::npos) return result;
+        pos = json.find("[", pos);
+        if (pos == std::string::npos) return result;
+        size_t end = json.find("]", pos);
+        if (end == std::string::npos) return result;
+        std::string arrayContent = json.substr(pos + 1, end - pos - 1);
+        
+        size_t i = 0;
+        while (i < arrayContent.length()) {
+            while (i < arrayContent.length() && (arrayContent[i] == ' ' || arrayContent[i] == ',')) ++i;
+            if (i >= arrayContent.length()) break;
+            if (arrayContent[i] == '"') {
+                size_t start = i + 1;
+                ++i;
+                while (i < arrayContent.length()) {
+                    if (arrayContent[i] == '"' && (i == 0 || arrayContent[i - 1] != '\\')) break;
+                    ++i;
+                }
+                result.push_back(unescapeJson(arrayContent.substr(start, i - start)));
+                ++i;
+            }
+        }
+        return result;
     }
 };
 
