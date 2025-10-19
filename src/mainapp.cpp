@@ -11,7 +11,8 @@ class MainApp : public App, public Page
 private:
     // pages would go here
     RecipeManager recipeManager;
-
+    Quote quote;
+    
     const string version = "1.0";
 
 public:
@@ -24,7 +25,7 @@ public:
     void schema() override
     {
         out.header("Welcome to " + appName + "! " + "(v" + version + ")");
-        out.coutln(Quote::getInstance().getRandomQuote());
+        out.coutln(quote.getRandomQuote());
         out.coutln("Your personal chef assistant.");
         out.br();
         out.displayChoices({"Recipe Manager", "Ingredient Manager", "Meal Planner", "Shopping List", "Exit"});
