@@ -125,9 +125,22 @@ private:
     }
 
     /*
+        Creates the directory if it doesn't exist.
+    */
+    void ensureDirectoryExists() {
+        #if defined(_WIN32) || defined(_WIN64)                              // Windows OS
+            system("if not exist .\\data mkdir .\\data");                   // create data directory if missing
+        #else                                                               // Unix/Linux/Mac OS
+            system("mkdir -p ./data");                                      // create data directory if missing
+        #endif
+    }
+
+    /*
         Creates the file if it doesn't exist.
     */
     void ensureFileExists() {
+        ensureDirectoryExists();                                            // ensure data directory exists first
+        
         ifstream checkFile(filename);                                       // try to open file for reading
         if (!checkFile.good()) {                                            // file doesn't exist
             // File doesn't exist, create it
