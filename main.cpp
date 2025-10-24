@@ -1,5 +1,5 @@
 #include <iostream>
-#include "src/mainapp.cpp"
+#include "src/index.cpp"
 
 
 using namespace std;
@@ -13,9 +13,11 @@ All logic should be in app.h
 
 */
 
+// Global width variable for console output formatting
+int width = 80;
+
 int main() {
-    MainApp app;
-    app.start();
-    app.close();
+    IndexPage index;
+    index.init();
     return 0;
 }
