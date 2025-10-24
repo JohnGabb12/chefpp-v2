@@ -2,6 +2,7 @@
 #include "../../vendor/base/page.h"
 #include "recipe.cpp"
 #include "viewrecipe.cpp"
+#include "deleterecipe.cpp"
 #include <vector>
 #include <string>
 #include <algorithm>
@@ -13,12 +14,12 @@
     It displays search results and allows viewing individual recipes.
 
     How it works:
-        - User selects search type (by name or by ingredients)
+        - User selects search type (by name, by ingredients, or by id)
         - Enters search query
         - System searches through all recipes in CSV file
         - Displays matching recipes in a list
         - User can view a recipe by entering its number
-        - Options: Research (search again) or Back
+        - Options: View Recipe, Delete Recipe, Research (search again), List All, or Back
 
     Header classes:
     #include "../../vendor/sys/out.h"
@@ -30,12 +31,15 @@
         private:
             - searchResults         : Vector of recipes matching search query
             - lastSearchQuery       : Stores the last search query string
-            - lastSearchType        : Stores the last search type (1=name, 2=ingredients)
+            - lastSearchType        : Stores the last search type (1=name, 2=ingredients, 3=id)
             - performSearch()       : Executes search based on type and query
             - searchByName()        : Searches recipes by name
             - searchByIngredients() : Searches recipes by ingredients
+            - searchById()          : Finds a recipe by its numeric id
+            - listAll()             : Loads all recipes into the results list
             - displayResults()      : Shows search results list
             - viewRecipeByNumber()  : Opens recipe modal by list number
+            - deleteRecipeByNumber(): Deletes recipe from list by number
         protected:
             - schema()              : Main page logic (override from Page)
         public:
@@ -87,6 +91,28 @@ private:
     }
 
     /*
+        List all recipes (no filtering)
+    */
+    void listAll() {
+        searchResults = Recipe::loadAll();                                  // load all recipes
+        lastSearchQuery = "all";                                           // mark query as all
+    }
+
+    /*
+        Search recipe by numeric id (matches Recipe.id)
+    */
+    void searchById(int id) {
+        vector<Recipe> allRecipes = Recipe::loadAll();                      // load all recipes from CSV
+        searchResults.clear();                                              // clear previous results
+        for (int i = 0; i < allRecipes.size(); i++) {                       // iterate all recipes
+            if (allRecipes[i].id == id) {                                   // match on id
+                searchResults.push_back(allRecipes[i]);                     // add match
+                break;                                                      // stop after first match
+            }
+        }
+    }
+
+    /*
         Perform search based on type and query
     */
     void performSearch() {
@@ -96,6 +122,9 @@ private:
         out.coutln("Search by:");                                           // show search options
         out.coutln("1. Recipe name");                                       // option 1
         out.coutln("2. Ingredients");                                       // option 2
+        out.coutln("3. ID");                                                // option 3 (by id)
+        out.coutln("4. List All");                                          // option 4 (list all)
+        out.coutln("5. Cancel");
         out.br();                                                           // blank line
         lastSearchType = out.inputi("Enter your choice: ");                 // get search type
         out.br();                                                           // blank line
@@ -106,6 +135,12 @@ private:
         } else if (lastSearchType == 2) {                                   // search by ingredients
             lastSearchQuery = out.inputs("Enter ingredient: ");             // get search query
             searchByIngredients(lastSearchQuery);                           // perform ingredient search
+        } else if (lastSearchType == 3) {                                   // search by id
+            int id = out.inputi("Enter recipe id (number): ");             // get id to search
+            searchById(id);                                                 // perform id search
+            lastSearchQuery = "id=" + to_string(id);                        // record query text
+        } else if (lastSearchType == 4) {                                   // list all
+            listAll();                                                      // load all recipes into results
         } else {                                                            // invalid choice
             out.coutln("Invalid choice!");                                  // error message
             out.br();                                                       // blank line
@@ -154,6 +189,30 @@ private:
         }
     }
 
+    /*
+        Delete a recipe by its number in the results list
+    */
+    void deleteRecipeByNumber() {
+        if (searchResults.size() == 0) {                                    // no results to delete
+            out.coutln("No recipes to delete. Please search first.");       // error message
+            out.br();                                                       // blank line
+            return;                                                         // exit function
+        }
+
+        out.br();                                                           // blank line
+        int choice = out.inputi("Which recipe to delete? (Enter number): ");  // get recipe number
+        
+        if (choice > 0 && choice <= searchResults.size()) {                 // valid choice
+            Recipe recipeToDelete = searchResults[choice - 1];              // get selected recipe
+            DeleteRecipeModal deleteModal(recipeToDelete.id);               // create modal with recipe id
+            deleteModal.init();                                             // show delete modal
+            performSearch();                                                // refresh search results after deletion
+        } else {                                                            // invalid choice
+            out.coutln("Invalid recipe number!");                           // error message
+            out.br();                                                       // blank line
+        }
+    }
+
 protected:
     /*
         Main page schema - Display search results
@@ -181,8 +240,14 @@ public:
             Options("View Recipe", [this]() {
                 viewRecipeByNumber();                                       // view selected recipe
             }),
+            Options("Delete Recipe", [this]() {
+                deleteRecipeByNumber();                                     // delete selected recipe
+            }),
             Options("Research", [this]() {
                 performSearch();                                            // perform new search
+            }),
+            Options("List All", [this]() {
+                listAll();                                                  // load all recipes
             })
         };
     }

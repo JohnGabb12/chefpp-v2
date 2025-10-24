@@ -44,7 +44,7 @@ private:
         out.hr();                                                           // display separator
         out.br();
         recipe.name = out.inputs("Enter recipe name: ");                    // get recipe name
-        string ingredientsInput = out.inputs("Enter ingredients (comma-separated): ");  // get ingredients input
+    string ingredientsInput = out.inputs("Enter ingredients (comma-separated; use name:amount:unit optional): ");  // get ingredients input with measurement format
         recipe.ingredients = Recipe::parseIngredients(ingredientsInput);    // parse ingredients to vector
         recipe.instructions = out.inputs("Enter instructions: ");           // get cooking instructions
         out.br();
@@ -79,7 +79,7 @@ private:
                 out.br();                                                   // blank line
                 break;
             case 2: {                                                       // change ingredients
-                string ingredientsInput = out.inputs("Enter ingredients (comma-separated): ");  // get new ingredients
+                string ingredientsInput = out.inputs("Enter ingredients (comma-separated; use name:amount:unit optional): ");  // get new ingredients with measurement format
                 recipe.ingredients = Recipe::parseIngredients(ingredientsInput);  // parse to vector
                 out.coutln("Ingredients changed successfully!");            // success message
                 out.br();                                                   // blank line

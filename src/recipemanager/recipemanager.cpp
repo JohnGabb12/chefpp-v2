@@ -1,4 +1,10 @@
 
+#include "../../vendor/sys/out.h"
+#include "../../vendor/base/page.h"
+#include "addrecipe.cpp"
+#include "searchrecipe.cpp"
+#include "deleterecipe.cpp"
+
 /*
     RecipeManagerPage Class
 
@@ -19,17 +25,14 @@
     #include "../../vendor/base/page.h"
     #include "addrecipe.cpp"          // AddRecipeModal (modal)
     #include "searchrecipe.cpp"       // SearchRecipePage (page)
+    #include "deleterecipe.cpp"       // DeleteRecipeModal (modal)
 
     Options:
         - "Add Recipe"        : Opens AddRecipeModal (collect → confirm → save → return)
-        - "Search Recipe"     : Opens SearchRecipePage (search by name/ingredient, view modal)
-        - "Delete Recipe"     : Placeholder for future implementation
+        - "Search Recipe"     : Opens SearchRecipePage (search by name/ingredient/id, view modal)
+        - "Delete Recipe"     : Opens DeleteRecipeModal (prompt for id → confirm → delete → return)
         - "Check Ingredients" : Placeholder for future implementation
 */
-#include "../../vendor/sys/out.h"
-#include "../../vendor/base/page.h"
-#include "addrecipe.cpp"
-#include "searchrecipe.cpp"
 
 // RecipeManagerPage derives from Page to reuse the base navigation framework.
 class RecipeManagerPage : public Page {
@@ -59,9 +62,10 @@ public:
                 searchPage.init();                    // navigate into page
             }),
 
-            // Placeholder: delete a recipe (to be implemented)
+            // Open the Delete Recipe flow (modal). Prompts for ID, confirms, and deletes.
             Options("Delete Recipe", []() {
-                out.coutln("Delete Recipe selected");
+                DeleteRecipeModal deleteRecipeModal;  // instantiate modal by value
+                deleteRecipeModal.init();             // run modal and return
             }),
 
             // Placeholder: check ingredients against a pantry (to be implemented)
