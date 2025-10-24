@@ -1,5 +1,5 @@
-// #ifdef CSV_H // for no dup def
-// #define CSV_H
+#ifndef CSV_H // for no dup def
+#define CSV_H
 
 #include "../sys/out.h"
 #include <string>
@@ -214,5 +214,4 @@ public:
 
 };
 
-
-// #endif // CSV_H
+#endif // CSV_H

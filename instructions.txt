@@ -3,8 +3,9 @@ Index
 │
 ├── Recipe Manager
 │   ├── add
-│   ├── view
 │   ├── search
+|   |   ├── by recipe name
+|   |   └── by recipe ingredients
 │   ├── check
 │   └── delete
 │

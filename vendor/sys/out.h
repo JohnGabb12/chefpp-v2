@@ -137,6 +137,17 @@ struct out {
         return str.substr(start, end - start + 1);                          // return trimmed string
     }
 
+    /*
+        Convert string to lowercase for case-insensitive comparisons
+    */
+    string toLowerCase(string str) {
+        string result = str;                                                // copy input string
+        for (int i = 0; i < result.length(); i++) {                         // loop through each character
+            result[i] = tolower(result[i]);                                 // convert to lowercase
+        }
+        return result;                                                      // return lowercase string
+    }
+
     /* 
         Clear console screen
     */

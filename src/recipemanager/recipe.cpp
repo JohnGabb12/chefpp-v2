@@ -1,3 +1,6 @@
+#ifndef RECIPE_H
+#define RECIPE_H
+
 #include "../../vendor/sys/out.h"
 #include "../../vendor/sys/csv.h"
 #include <vector>
@@ -137,16 +140,18 @@ public:
         Load all recipes from CSV file
     */
     static vector<Recipe> loadAll() {
-        vector<Recipe> recipes;
+        vector<Recipe> recipes;                                             // create empty recipes vector
         CSV csv("recipes.csv");                                             // open recipes CSV file
         vector<vector<string>> data = csv.read();                           // read all rows
         
-        for (const auto& row : data) {                                      // loop through each row
-            if (!row.empty() && !row[0].empty()) {                          // skip empty rows
-                recipes.push_back(fromCSVRow(row));                         // convert and add recipe
+        for (int i = 0; i < data.size(); i++) {                             // loop through each row
+            if (!data[i].empty() && !data[i][0].empty()) {                  // skip empty rows
+                recipes.push_back(fromCSVRow(data[i]));                     // convert and add recipe
             }
         }
         
         return recipes;                                                     // return all recipes
     }
 };
+
+#endif // RECIPE_H

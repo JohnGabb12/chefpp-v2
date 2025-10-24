@@ -2,6 +2,7 @@
 #include "../../vendor/sys/out.h"
 #include "../../vendor/base/page.h"
 #include "addrecipe.cpp"
+#include "searchrecipe.cpp"
 
 class RecipeManagerPage : public Page {
 
@@ -15,17 +16,19 @@ public:
                 AddRecipeModal addRecipeModal;
                 addRecipeModal.init();
             }),
-            Options("View Recipes", []() {
-                out.coutln("View Recipes selected");
+            Options("Search Recipe", []() {
+                SearchRecipePage searchPage;
+                searchPage.init();
             }),
             Options("Delete Recipe", []() {
                 out.coutln("Delete Recipe selected");
+            }),
+            Options("Check Ingredients", []() {
+                out.coutln("Check Ingredients selected");
             })
         };
     }
 
-    void schema() override {
-        out.coutln(out.center("Manage your recipes here."));
-    }
+    void schema() override {}
 
 };
