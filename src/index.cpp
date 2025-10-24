@@ -3,6 +3,8 @@
 #include "../vendor/base/page.h"
 #include "../vendor/sys/options.h"
 
+#include "recipemanager/recipemanager.cpp"
+
 class IndexPage : public Page {
 protected:
     string version = "1.0";
@@ -25,6 +27,9 @@ protected:
     }
 
 public:
+
+    RecipeManagerPage recipeManager;
+
     IndexPage() : Page() {
         // Set to show "Exit" instead of "Back"
         useExitInsteadOfBack = true;
@@ -32,10 +37,10 @@ public:
         
         // Initialize the parent class options vector
         options = {
-            Options("Recipe Manager", []() {
-                out.coutln("Recipe Manager selected");
+            Options("Recipe Manager", [this]() {
+                recipeManager.init();
             }),
-            Options("Ingredient Manager", []() {
+            Options("Ingredient Manager", [this]() {
                 out.coutln("Ingredient Manager selected");
             })
         };

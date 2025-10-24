@@ -95,6 +95,49 @@ struct out {
     }
 
     /* 
+        Input string with prompt 
+    */
+    string inputs(string prompt) {
+        if (!prompt.empty()) {                                              // check if prompt is provided
+            cout << prompt;                                                 // display prompt to user
+        }
+        string input;                                                       // store user input
+        getline(cin, input);                                                // read entire line of input
+        return input;                                                       // return input string
+    }
+
+    /* 
+        Input yes/no with prompt and validation 
+    */
+    bool inputYesNo(string prompt) {
+        while (true) {                                                      // loop until valid input
+            if (!prompt.empty()) {                                          // check if prompt is provided
+                cout << prompt;                                             // display prompt to user
+            }
+            string input;                                                   // store user input
+            getline(cin, input);                                            // read entire line of input
+            
+            if (!input.empty()) {                                           // check if input is not empty
+                char c = tolower(input[0]);                                 // get first character as lowercase
+                if (c == 'y') return true;                                  // return true for yes
+                if (c == 'n') return false;                                 // return false for no
+            }
+            this->coutln("Please enter 'y' or 'n'.");                       // show error message
+            this->br();                                                     // add blank line
+        }
+    }
+
+    /* 
+        Trim whitespace from beginning and end of string
+    */
+    string trim(string str) {
+        size_t start = str.find_first_not_of(" \t\r\n");                    // find first non-whitespace
+        if (start == string::npos) return "";                               // return empty if all whitespace
+        size_t end = str.find_last_not_of(" \t\r\n");                       // find last non-whitespace
+        return str.substr(start, end - start + 1);                          // return trimmed string
+    }
+
+    /* 
         Clear console screen
     */
     void clear() {

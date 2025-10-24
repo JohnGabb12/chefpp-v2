@@ -1,3 +1,32 @@
+Navigation tree:
+Index
+│
+├── Recipe Manager
+│   ├── add
+│   ├── view
+│   ├── search
+│   ├── check
+│   └── delete
+│
+├── Pantry Inventory Manager
+│   ├── add
+│   ├── view
+│   ├── update
+│   └── delete
+│
+├── Meal Planner
+│   ├── generate
+│   └── view
+│
+├── Grocery List Generator
+│   ├── generate
+│   ├── add
+│   ├── remove
+│   ├── view
+│   └── sync
+│
+└── Exit
+
 Sample Output:
 
 ===========================================
