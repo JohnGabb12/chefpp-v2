@@ -1,25 +1,27 @@
 Navigation tree:
 Index
 │
-├── Recipe Manager
-│   ├── add
-│   ├── search
+├── Recipe Manager (Page)
+│   ├── add (Modal)
+│   ├── search (Page)
 |   |   ├── by recipe name
-|   |   └── by recipe ingredients
-│   ├── check
-│   └── delete
+|   |   ├── by recipe ingredients
+|   |   ├── by id
+|   |   └── list all
+│   ├── delete (Modal)
+│   └── check (Placeholder)
 │
-├── Pantry Inventory Manager
+├── Pantry Inventory Manager (Placeholder)
 │   ├── add
 │   ├── view
 │   ├── update
 │   └── delete
 │
-├── Meal Planner
+├── Meal Planner (Placeholder)
 │   ├── generate
 │   └── view
 │
-├── Grocery List Generator
+├── Grocery List Generator (Placeholder)
 │   ├── generate
 │   ├── add
 │   ├── remove
@@ -50,55 +52,28 @@ Enter your choice: 1
 ========== RECIPE MANAGER ==========
 Options:
 1. Add Recipe
-2. View Recipes
-3. Search Recipe
-4. Delete Recipe
-5. Check Ingredients
-6. Back
+2. Search Recipe
+3. Delete Recipe
+4. Check Ingredients
+5. Back
 
 Enter your choice: 1
 
 -------------------------------------------
 
-Enter recipe name: Spaghetti Bolognee
-Enter ingredients (comma-separated): spaghetti, ground beef, tomato sauce, onion, garlic
+Enter recipe name: Spaghetti Bolognese
+Enter ingredients (comma-separated; use name:amount:unit optional): spaghetti, ground beef:500:g, tomato sauce|2|cups, onion, garlic
 Enter instructions: Boil spaghetti. Cook beef with sauce and spices. Mix and serve.
 
 +-----------------------------------------+
 
-Recipe: Spaghetti Bolognee
-
-Ingredients: 
-- spaghetti
-- ground beef
-- tomato sauce
-- onion
-- garlic
-
-Boil spaghetti. Cook beef with sauce and spices. Mix and serve.
-
-+-----------------------------------------+
-
-Are you sure? (y/n): n
-
-What do you want to change:
-1. Recipe name
-2. Ingredients
-3. instructions
-4. None
-Enter your choice: 1
-
-Recipe name: Spaghetti Bolognese
-Recipe 'Spaghetti Bolognese' changed successfully!
-
-+-----------------------------------------+
-
+ID: 1
 Recipe: Spaghetti Bolognese
 
 Ingredients: 
 - spaghetti
-- ground beef
-- tomato sauce
+- ground beef (500 g)
+- tomato sauce (2 cups)
 - onion
 - garlic
 
@@ -107,45 +82,44 @@ Boil spaghetti. Cook beef with sauce and spices. Mix and serve.
 +-----------------------------------------+
 
 Are you sure? (y/n): y
-Recipe 'Spaghetti Bolognee' added successfully!
+Recipe 'Spaghetti Bolognese' added successfully!
 
 
 
-========== RECIPE MANAGER ==========
-Options:
-1. Add Recipe
-2. View Recipes
-3. Search Recipe
-4. Delete Recipe
-5. Check Ingredients
-6. Back
+========== SEARCH RECIPE ==========
 
-Enter your choice: 2
+Search by:
+1. Recipe name
+2. Ingredients
+3. ID
+4. List All
+
+Enter your choice: 4
 
 -------------------------------------------
 
-Recipes (10 recipes/page)
-1. Spaghetti Bolognese
-Page 1/1
-
+Search Results (1 recipe(s) found):
+1. Spaghetti Bolognese (ID: 1)
 
 Options:
 1. View Recipe
-2. Next Page
-3. Previous Page
-4. Back
+2. Delete Recipe
+3. Research
+4. List All
+5. Back
 
 Enter your choice: 1
-Which recipe?: 1
+Which recipe? (Enter number): 1
 
 +-----------------------------------------+
 
+ID: 1
 Recipe: Spaghetti Bolognese
 
 Ingredients: 
 - spaghetti
-- ground beef
-- tomato sauce
+- ground beef (500 g)
+- tomato sauce (2 cups)
 - onion
 - garlic
 
@@ -153,22 +127,48 @@ Boil spaghetti. Cook beef with sauce and spices. Mix and serve.
 
 +-----------------------------------------+
 
-Options:
-1. View Recipe
-2. Back to Recipes
-3. Back to Recipe Manager
+Enter your choice: 2
+Which recipe to delete? (Enter number): 1
+
+Recipe to delete:
+
++-----------------------------------------+
+
+ID: 1
+Recipe: Spaghetti Bolognese
+
+Ingredients: 
+- spaghetti
+- ground beef (500 g)
+- tomato sauce (2 cups)
+- onion
+- garlic
+
+Boil spaghetti. Cook beef with sauce and spices. Mix and serve.
+
++-----------------------------------------+
+
+Are you sure you want to delete this recipe? (y/n): y
+Recipe deleted successfully!
+
+-------------------------------------------
+
+Search Results (0 recipe(s) found):
+No recipes found matching your search.
+
+
+Run another search:
+
+Search by:
+1. Recipe name
+2. Ingredients
+3. ID
+4. List All
 
 Enter your choice: 3
+Enter recipe id (number): 1
 
+-------------------------------------------
 
-
-========== RECIPE MANAGER ==========
-Options:
-1. Add Recipe
-2. View Recipes
-3. Search Recipe
-4. Delete Recipe
-5. Check Ingredients
-6. Back
-
-Enter your choice: 3
+Search Results (0 recipe(s) found):
+No recipes found matching your search.
