@@ -33,72 +33,86 @@ private:
     Recipe recipe;                                                          // recipe to display
 
     /*
+        Parse ingredient token into name, amount, and unit
+            - Supports "name|amount|unit" or "name:amount:unit"
+            - Returns parsed values by reference
+    */
+    void parseIngredient(string token, string& name, string& amount, string& unit) {
+        int sep1 = -1; int sep2 = -1; char separator = ' ';
+        for (int i = 0; i < token.length(); i++) {              // find separator type
+            if (token[i] == '|') { sep1 = i; separator = '|'; break; }
+            if (token[i] == ':') { sep1 = i; separator = ':'; break; }
+        }
+        if (sep1 != -1) {                                       // first separator found
+            for (int i = sep1 + 1; i < token.length(); i++) {   // find second separator
+                if (token[i] == separator) { sep2 = i; break; }
+            }
+        }
+        if (sep1 != -1 && sep2 != -1) {                         // both separators found
+            name = out.trim(token.substr(0, sep1));             // extract name
+            amount = out.trim(token.substr(sep1 + 1, sep2 - sep1 - 1));    // extract amount
+            unit = out.trim(token.substr(sep2 + 1));            // extract unit
+        } else {
+            name = out.trim(token);                             // only name available
+            amount = ""; unit = "";
+        }
+    }
+
+    /*
+        Find pantry item by name
+            - Returns quantity and unit if found
+            - Returns found status
+    */
+    bool findInPantry(string itemName, double& quantity, string& unit) {
+        vector<Pantry> pantry = Pantry::loadAll();              // load all pantry items
+        string nameLower = out.toLowerCase(itemName);           // normalize search name
+        for (int i = 0; i < pantry.size(); i++) {               // search pantry
+            if (out.toLowerCase(pantry[i].name) == nameLower) { // name match
+                unit = pantry[i].unit;                          // get unit
+                try { quantity = stod(pantry[i].quantity); } catch (...) { quantity = 0.0; }    // parse quantity
+                return true;                                    // found
+            }
+        }
+        return false;                                           // not found
+    }
+
+    /*
+        Add item to grocery list with given quantity
+    */
+    void addToGrocery(string name, string quantity, string unit) {
+        GroceryItem item(name, quantity, unit);                 // create grocery item
+        item.save();                                            // save to list
+    }
+
+    /*
         Generate grocery list entries for this recipe
             - Compares required ingredients to pantry
             - Adds missing or insufficient amounts to grocery.csv
     */
     void generateGroceryForRecipe() {
-        for (int i = 0; i < recipe.ingredients.size(); i++) {   // loop through recipe ingredients
-            string token = recipe.ingredients[i];   // get ingredient token
-            string iname = ""; string iamount = ""; string iunit = "";
-            int p1 = -1; int p2 = -1;
-            for (int j = 0; j < token.length(); j++) { if (token[j] == '|') { p1 = j; break; } }    // find first '|'
-            if (p1 != -1) { for (int j = p1 + 1; j < token.length(); j++) { if (token[j] == '|') { p2 = j; break; } } }  // find second '|'
-            if (p1 != -1 && p2 != -1) {             // pipe separator found
-                iname = out.trim(token.substr(0, p1));      // extract name
-                iamount = out.trim(token.substr(p1 + 1, p2 - p1 - 1));      // extract amount
-                iunit = out.trim(token.substr(p2 + 1));     // extract unit
-            } else {
-                int c1 = -1; int c2 = -1;
-                for (int j = 0; j < token.length(); j++) { if (token[j] == ':') { c1 = j; break; } }    // find first ':'
-                if (c1 != -1) { for (int j = c1 + 1; j < token.length(); j++) { if (token[j] == ':') { c2 = j; break; } } }  // find second ':'
-                if (c1 != -1 && c2 != -1) {         // colon separator found
-                    iname = out.trim(token.substr(0, c1));  // extract name
-                    iamount = out.trim(token.substr(c1 + 1, c2 - c1 - 1));  // extract amount
-                    iunit = out.trim(token.substr(c2 + 1)); // extract unit
-                } else {
-                    iname = out.trim(token);        // only name provided
-                }
+        for (int i = 0; i < recipe.ingredients.size(); i++) {   // process each ingredient
+            string name = ""; string amountStr = ""; string unit = "";
+            parseIngredient(recipe.ingredients[i], name, amountStr, unit);  // parse ingredient
+
+            double need = 0.0;
+            if (amountStr != "") {                              // amount provided
+                try { need = stod(amountStr); } catch (...) { need = 0.0; }     // parse amount
             }
 
-            double need = 0.0; if (iamount != "") { try { need = stod(iamount); } catch (...) { need = 0.0; } }  // parse required amount
-            string unit = iunit;                    // store unit
+            double have = 0.0; string pantryUnit = "";
+            bool inPantry = findInPantry(name, have, pantryUnit);   // check pantry
 
-            vector<Pantry> pantry = Pantry::loadAll();      // load pantry items
-            double have = 0.0; string haveUnit = ""; bool found = false;
-            string inameLower = out.toLowerCase(iname);     // normalize ingredient name
-            for (int k = 0; k < pantry.size(); k++) {
-                string pnamel = out.toLowerCase(pantry[k].name);    // normalize pantry name
-                if (pnamel == inameLower) {         // match found
-                    found = true;                   // mark as found
-                    haveUnit = pantry[k].unit;      // get pantry unit
-                    try { have = stod(pantry[k].quantity); } catch (...) { have = 0.0; }    // parse pantry quantity
-                    break;                          // exit loop
-                }
-            }
-
-            if (!found) {                           // ingredient not in pantry
-                string qty = iamount == "" ? "1" : iamount;     // use amount or default to 1
-                GroceryItem gi(iname, qty, unit);   // create grocery item
-                gi.save();                          // save to grocery list
-            } else {
-                if (unit != "" && haveUnit != "" && unit != haveUnit) {     // unit mismatch
-                    string qty2 = iamount == "" ? "1" : iamount;    // use amount or default to 1
-                    GroceryItem gi2(iname, qty2, unit);     // create grocery item
-                    gi2.save();                     // save to grocery list (no conversion)
-                } else {
-                    double diff = need - have;      // calculate difference
-                    if (need == 0.0) {              // unknown amount
-                        if (have <= 0.0) {          // pantry has none
-                            GroceryItem gi3(iname, "1", unit);  // add 1 to list
-                            gi3.save();             // save to grocery list
-                        }
-                    } else if (diff > 0.0) {        // need more than have
-                        string addq = to_string(diff);      // convert difference to string
-                        GroceryItem gi4(iname, addq, unit); // create grocery item
-                        gi4.save();                 // save to grocery list
-                    }
-                }
+            if (!inPantry) {                                    // not in pantry
+                string qty = amountStr == "" ? "1" : amountStr; // default to 1 if unknown
+                addToGrocery(name, qty, unit);                  // add full amount
+            } else if (unit != "" && pantryUnit != "" && unit != pantryUnit) {  // unit mismatch
+                string qty = amountStr == "" ? "1" : amountStr; // default to 1 if unknown
+                addToGrocery(name, qty, unit);                  // add full amount (no conversion)
+            } else if (need == 0.0 && have <= 0.0) {            // unknown amount and pantry empty
+                addToGrocery(name, "1", unit);                  // add default 1
+            } else if (need > have) {                           // need more than available
+                double diff = need - have;                      // calculate shortage
+                addToGrocery(name, to_string(diff), unit);      // add difference
             }
         }
         out.coutln("Grocery list generated based on pantry availability.");
