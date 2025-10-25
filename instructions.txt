@@ -1,13 +1,35 @@
+
+Company Name: HelloFresh SE
+Company Profile: HelloFresh is an international meal-kit delivery service that provides fresh ingredients and easy-to-follow recipes to households worldwide. The company aims to simplify home cooking, reduce food waste, and promote healthy eating habits.
+
+System: Chef++: The HelloFresh Kitchen Management System
+Example Problem (Fictional Problem)
+To support its operations and internal kitchen development team, HelloFresh needed a CLI-based management tool to efficiently monitor recipe data, pantry stocks, and ingredient needs for meal kit assembly.
+
+System Description:
+Chef++ was developed as an internal kitchen logistics solution to make inventory management and recipe tracking more accurate and less time-consuming.
+
+Chef++ integrates with HelloFresh’s production planning software. It helps forecast ingredient demand, avoid shortages, and ensure every recipe can be packed with fresh ingredients on schedule.
+
+Benefits to the Company
+Reduces food waste by accurate stock monitoring
+Increases operational efficiency in meal kit preparation
+Helps maintain consistent recipe quality
+Simplifies planning for multiple weekly menus
+
+Brief Background
+	Cooking should be a joy, not a chore. Chef++ is built to make your time in the kitchen precise, effortless, and organized. Our system helps our users monitor their pantry stocks with our Pantry Inventory Manager. Chef++ also boasts its recipe manager, allowing users to access their favorite recipes in one clean, organized space. Finally, users can map out their entire week and know exactly what to buy with our Meal Planner. With Chef++, your kitchen—now compiled. 
+
 Navigation tree:
 Index
 │
 ├── Recipe Manager (Page)
 │   ├── add (Modal)
 │   ├── search (Page)
-|   |   ├── by recipe name
-|   |   ├── by recipe ingredients
-|   |   ├── by id
-|   |   └── list all
+│   │   ├── by recipe name
+│   │   ├── by recipe ingredients
+│   │   ├── by id
+│   │   └── list all
 │   ├── delete (Modal)
 │   └── check (Placeholder)
 │
@@ -21,7 +43,7 @@ Index
 │   ├── generate
 │   └── view
 │
-├── Grocery List Generator (Placeholder)
+├── Grocery List Manager (Placeholder)
 │   ├── generate
 │   ├── add
 │   ├── remove
@@ -29,6 +51,44 @@ Index
 │   └── sync
 │
 └── Exit
+
+Main Features
+Recipe Manager
+“How do I make this?”
+Acts as a centralized, digital, and instantly searchable cookbook for users
+Functionalities:
+add: uses RecipeController::addRecipe() to add a new recipe 
+view: uses RecipeController::listRecipes() to display all available recipes
+search: uses RecipeController::findRecipe() to find a recipe by name
+delete: removes a recipe
+check: uses Pantry::hasIngredient() to check the recipe ingredient list against the pantry
+
+Pantry Inventory Manager
+“What do I have right now?”
+Real-time record of every ingredient the user has in their kitchen
+Functionalities: 
+add: uses Pantry::addIngredient() to add a new ingredient to the pantry
+view: view all items currently in the pantry
+delete: uses Pantry::removeIngredient() to remove an ingredient that is out of stock
+update: uses the ingredient’s adjustQuantity() to adjust its quantity after being retrieved from the pantry
+
+Meal Planner
+“What should I eat this week?”
+Integrates data from the Pantry and Recipe Manager to automate weekly planning
+Functionalities: 
+generate: uses MealPlanner::planMeals() to create a weekly meal plan
+view: uses MealPlanner::getPlan() to display the current weekly meal plan
+
+Grocery List Generator
+“What do I need to buy?”
+Collates all ingredients required for every recipe in the meal plan.
+Compares the collated ingredients against the Pantry inventory
+Functionalities: 
+generate: uses MealPlanner::generateGroceryist() to create a grocery list with missing ingredients to create a recipe
+add: uses GroceryList::addTask() to manually add items to the grocery list
+remove: uses GroceryList::removeTask() to remove an item from the grocery list or the GroceryManager::removeList() to remove the entire grocery list 
+view: uses GroceryManager::getList() to check the recipe ingredient list against the pantry
+
 
 Sample Output:
 
