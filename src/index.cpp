@@ -4,6 +4,7 @@
 #include "../vendor/sys/options.h"
 
 #include "recipemanager/recipemanager.cpp"
+#include "pantrymanager/pantrymanager.cpp"
 
 class IndexPage : public Page {
 protected:
@@ -29,6 +30,7 @@ protected:
 public:
 
     RecipeManagerPage recipeManager;
+    PantryManagerPage pantryManager;
 
     IndexPage() : Page() {
         // Set to show "Exit" instead of "Back"
@@ -40,8 +42,8 @@ public:
             Options("Recipe Manager", [this]() {
                 recipeManager.init();
             }),
-            Options("Ingredient Manager", [this]() {
-                out.coutln("Ingredient Manager selected");
+            Options("Pantry Inventory Manager", [this]() {
+                pantryManager.init();
             })
         };
     }

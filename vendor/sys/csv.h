@@ -8,6 +8,7 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include "../../src/recipemanager/seeder.h"
 
 using namespace std;
 
@@ -148,6 +149,16 @@ private:
             if (createFile.is_open()) {
                 createFile.close();                                         // close the file
                 out.coutln("Created new CSV file: " + filename);            // notify user
+                // If the created file is the recipes CSV, seed it now.
+                try {
+                    string tail = filename;
+                    for (int i = 0; i < (int)tail.length(); ++i) if (tail[i] == '\\') tail[i] = '/';
+                    if (tail.size() >= 11 && tail.substr(tail.size() - 11) == "recipes.csv") {
+                        Seeder::seedRecipes(filename, 100);
+                    }
+                } catch (...) {
+                    // ignore seeder errors
+                }
             } else {
                 out.coutln("Error: Could not create file " + filename);     // notify error
             }

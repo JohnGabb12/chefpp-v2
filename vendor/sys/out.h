@@ -6,7 +6,7 @@
 
 using namespace std;
 
-// Forward declaration - width must be defined in main.cpp
+// Forward declaration - width must be defined in main.cpp (extern int width;)
 extern int width;
 
 /*
@@ -131,10 +131,10 @@ struct out {
         Trim whitespace from beginning and end of string
     */
     string trim(string str) {
-        size_t start = str.find_first_not_of(" \t\r\n");                    // find first non-whitespace
-        if (start == string::npos) return "";                               // return empty if all whitespace
-        size_t end = str.find_last_not_of(" \t\r\n");                       // find last non-whitespace
-        return str.substr(start, end - start + 1);                          // return trimmed string
+        int start = str.find_first_not_of(" \t\r\n");                       // find first non-whitespace
+        if (start == string::npos) return "";                                // return empty if all whitespace
+        int end = str.find_last_not_of(" \t\r\n");                           // find last non-whitespace
+        return str.substr(start, end - start + 1);                           // return trimmed string
     }
 
     /*

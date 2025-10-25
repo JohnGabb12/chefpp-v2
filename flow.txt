@@ -1,0 +1,721 @@
+================================================================================
+                    PANTRY INVENTORY MANAGER - FLOW DOCUMENTATION
+================================================================================
+
+This document traces the execution flow of the Pantry Inventory Manager
+by analyzing each function and method step by step.
+
+KEY FEATURES:
+- Duplicate Prevention: When adding ingredients, the system checks if an
+  ingredient with the same name already exists (case-insensitive). If found,
+  it adds the new quantity to the existing quantity instead of creating a
+  duplicate entry.
+
+================================================================================
+                            CORE PANTRY METHODS
+================================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Pantry::loadAll()
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Purpose: Load all pantry ingredients from CSV file
+
+Steps:
+1. Create empty vector<Pantry> items to store results
+2. Create CSV object with filename "pantry.csv"
+   - CSV constructor calls ensureFileExists()
+   - If file doesn't exist, creates ./data/pantry.csv
+3. Call csv.read() to get 2D vector of strings (data)
+   - Opens ./data/pantry.csv for reading
+   - Parses each line into fields
+   - Returns vector<vector<string>> containing all rows
+4. Loop through each row in data (index i from 0 to data.size())
+   - Check if data[i] is not empty
+   - If not empty, call Pantry::fromCSVRow(data[i])
+   - Push resulting Pantry object to items vector
+5. Return items vector containing all loaded pantry ingredients
+
+Used by: findById(), findByName(), AddPantryItemModal, ViewPantryPage, 
+         UpdatePantryItemModal, DeletePantryItemModal
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Pantry::fromCSVRow(vector<string> row)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Purpose: Convert a CSV row into a Pantry object
+
+Steps:
+1. Create empty Pantry item
+2. Check if row.size() >= 4 (valid row format: id,name,quantity,unit)
+3. If valid:
+   a. Initialize parsedId to 0
+   b. Try to parse row[0] to integer using stoi()
+   c. If parsing fails, catch exception and set parsedId to 0
+   d. Set item.id = parsedId
+   e. Set item.name = row[1]
+   f. Set item.quantity = row[2]
+   g. Set item.unit = row[3]
+4. Return item (may be empty if row was invalid)
+
+Used by: loadAll()
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Pantry::toCSVRow()
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Purpose: Convert Pantry object to CSV row format
+
+Steps:
+1. Create empty vector<string> row
+2. Push to_string(id) to row
+3. Push name to row
+4. Push quantity to row
+5. Push unit to row
+6. Return row (4 string elements representing CSV columns)
+
+Used by: save()
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Pantry::save()
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Purpose: Add new ingredient to pantry CSV file
+         (Prevents duplicates by adding quantities if ingredient already exists)
+
+Steps:
+1. Create CSV object with filename "pantry.csv"
+   - Ensures file exists (creates if missing)
+2. Call csv.read() to get existing data
+
+3. CHECK FOR DUPLICATE INGREDIENT:
+   a. Call Pantry::findByName(name) to search for existing ingredient
+      ... steps from Pantry::findByName (see below)
+   b. If existing.id > 0 (ingredient found):
+      i.   Initialize existingQty = 0.0
+      ii.  Try to parse existing.quantity to double using stod()
+      iii. If parsing fails, set existingQty = 0.0
+      iv.  Initialize newQty = 0.0
+      v.   Try to parse this->quantity to double using stod()
+      vi.  If parsing fails, set newQty = 0.0
+      vii. Calculate totalQty = existingQty + newQty
+      viii.Convert totalQty to string (totalQtyStr)
+      ix.  Loop through data to find row with existing.id:
+           - Parse row[0] to get rowId
+           - If rowId == existing.id, set data[i][2] = totalQtyStr
+           - Break out of loop
+      x.   Call csv.write(data) to save updated data
+      xi.  Print "Ingredient 'name' already exists!"
+      xii. Print "Updated quantity from [old] [unit] to [new] [unit]"
+      xiii.Print blank line
+      xiv. Return (don't create new entry)
+
+4. IF NO DUPLICATE FOUND, ADD NEW INGREDIENT:
+   a. Find maximum ID in existing data:
+      i.  Initialize maxId = 0
+      ii. Loop through each row in data (index i)
+      iii.Check if row has at least 1 element
+      iv. Try to parse row[0] (id column) to integer
+      v.  If parsed > maxId, update maxId
+   b. Set this ingredient's id = maxId + 1 (auto-increment)
+   c. Call toCSVRow() to convert this Pantry to vector<string>
+   d. Push the CSV row to data vector
+   e. Call csv.write(data) to write all data back to file
+   f. If write successful:
+      - Print "Ingredient 'name' added successfully!"
+   g. If write failed:
+      - Print "Error: Could not save ingredient."
+   h. Print blank line
+
+Used by: AddPantryItemModal::schema()
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Pantry::findById(int rid)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Purpose: Find and return a specific ingredient by its ID
+
+Steps:
+1. Call Pantry::loadAll() to get all ingredients
+   ... steps from Pantry::loadAll (see above)
+2. Loop through all items (index i from 0 to all.size())
+3. Check if all[i].id == rid (requested id)
+4. If match found, return all[i] immediately
+5. If loop completes without match, return empty Pantry() object
+   - Empty Pantry has id = 0, which indicates "not found"
+
+Used by: UpdatePantryItemModal::schema(), DeletePantryItemModal::schema()
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Pantry::findByName(string searchName)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Purpose: Find and return a specific ingredient by its name (case-insensitive)
+
+Steps:
+1. Call Pantry::loadAll() to get all ingredients
+   ... steps from Pantry::loadAll (see above)
+2. Convert searchName to lowercase:
+   a. Create lowerSearchName = searchName
+   b. Loop through each character (index i from 0 to lowerSearchName.length())
+   c. Set lowerSearchName[i] = tolower(lowerSearchName[i])
+3. Loop through all items (index i from 0 to all.size()):
+   a. Create lowerItemName = all[i].name
+   b. Convert lowerItemName to lowercase:
+      i.  Loop through each character (index j from 0 to lowerItemName.length())
+      ii. Set lowerItemName[j] = tolower(lowerItemName[j])
+   c. If lowerItemName == lowerSearchName (case-insensitive match):
+      - Return all[i] immediately
+4. If loop completes without match, return empty Pantry() object
+   - Empty Pantry has id = 0, which indicates "not found"
+
+Used by: Pantry::save() for duplicate detection
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Pantry::deleteById(int id)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Purpose: Delete an ingredient from the CSV file by its ID
+
+Steps:
+1. Create CSV object with filename "pantry.csv"
+2. Call csv.read() to get all existing data
+3. Create empty vector<vector<string>> newData for filtered results
+4. Initialize found = false
+5. Loop through each row in data (index i):
+   a. Check if row has at least 4 elements (valid format)
+   b. Try to parse row[0] (id column) to integer rowId
+   c. If parsing fails, set rowId = 0
+   d. If rowId == id (the one to delete):
+      - Set found = true
+      - continue to next iteration (skip adding to newData)
+   e. Otherwise, push this row to newData
+6. If found == true:
+   a. Call csv.write(newData) to overwrite file without deleted row
+   b. Return true
+7. If found == false:
+   a. Return false (ingredient not found)
+
+Used by: DeletePantryItemModal::schema()
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Pantry::updateQuantity(string newQuantity)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Purpose: Update the quantity of this ingredient in the CSV file
+
+Steps:
+1. Create CSV object with filename "pantry.csv"
+2. Call csv.read() to get all existing data
+3. Initialize found = false
+4. Loop through each row in data (index i):
+   a. Check if row has at least 4 elements
+   b. Try to parse row[0] (id column) to integer rowId
+   c. If parsing fails, set rowId = 0
+   d. If rowId == this->id (current ingredient's id):
+      - Set data[i][2] = newQuantity (update quantity column)
+      - Set this->quantity = newQuantity (update object field)
+      - Set found = true
+      - break out of loop
+5. If found == true:
+   a. Call csv.write(data) to save updated data
+   b. Return true
+6. If found == false:
+   a. Return false (ingredient not found in file)
+
+Used by: UpdatePantryItemModal::schema()
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Pantry::displayPreview()
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Purpose: Display ingredient details in a formatted box
+
+Steps:
+1. Print line: "+-----------------------------------------+"
+2. Print blank line
+3. If id > 0, print "ID: " + to_string(id)
+4. Print "Ingredient: " + name
+5. Print "Quantity: " + quantity + " " + unit
+6. Print blank line
+7. Print line: "+-----------------------------------------+"
+8. Print blank line
+
+Used by: AddPantryItemModal::confirmItem(), UpdatePantryItemModal::schema(),
+         DeletePantryItemModal::schema()
+
+
+================================================================================
+                        ADD INGREDIENT FLOW
+================================================================================
+
+NOTE: The add ingredient flow includes duplicate prevention. If an ingredient
+      with the same name already exists (case-insensitive), the system will
+      add the new quantity to the existing quantity instead of creating a
+      duplicate entry.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+AddPantryItemModal::init() → schema()
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Entry Point: User selects "Add Ingredient" from Pantry Manager menu
+
+Main Flow:
+1. Modal::init() is called (inherited from Modal base class)
+   a. Call out.clear() to clear screen
+   b. Call schema() (AddPantryItemModal's override)
+   c. Print blank line
+   d. Display "Press Enter to exit..." prompt
+   e. Wait for cin.get()
+
+2. AddPantryItemModal::schema() executes:
+   
+   STEP A: Collect Item Data
+   ────────────────────────────────────────────────────────────────────────
+   Call collectItemData():
+   1. Print horizontal rule (hr)
+   2. Print blank line
+   3. Prompt "Enter ingredient name: "
+      - Call out.inputs() to get user input
+      - Store in item.name
+   4. Prompt "Enter quantity: "
+      - Call out.inputs()
+      - Store in item.quantity
+   5. Prompt "Enter unit (cups, g, tsp, etc): "
+      - Call out.inputs()
+      - Store in item.unit
+   6. Print blank line
+   
+   STEP B: Confirmation Loop
+   ────────────────────────────────────────────────────────────────────────
+   Enter while(true) loop:
+   
+   7. Call confirmItem():
+      a. Call out.clear() to clear screen
+      b. Call item.displayPreview() to show ingredient details
+         ... steps from Pantry::displayPreview (see above)
+      c. Call out.inputYesNo("Are you sure? (y/n): ")
+         - Prompts user for y/n input
+         - Returns true if 'y', false if 'n'
+      d. Return the boolean result
+   
+   8. If confirmItem() returns true (user confirmed):
+      a. Call item.save()
+         ... steps from Pantry::save (see above)
+         - First checks if ingredient name already exists (findByName)
+         - If exists: Adds quantities together and updates existing entry
+         - If not exists: Assigns auto-incremented ID and creates new entry
+         - Prints appropriate success/update message
+      b. Reset item = Pantry() (empty object for potential next add)
+      c. return from schema() (exits to Modal::init())
+   
+   9. If confirmItem() returns false (user wants to edit):
+      a. Call changeItem():
+         
+         STEP C: Edit Fields
+         ────────────────────────────────────────────────────────────
+         1. Print blank line
+         2. Print "What do you want to change:"
+         3. Print "1. Ingredient name"
+         4. Print "2. Quantity"
+         5. Print "3. Unit"
+         6. Print "4. None"
+         7. Call out.inputi("Enter your choice: ") to get choice
+         8. Print blank line
+         9. Switch on choice:
+            
+            case 1 (Change name):
+            - Prompt "Ingredient name: "
+            - Call out.inputs() and store in item.name
+            - Print "Ingredient name changed successfully!"
+            - Print blank line
+            - break
+            
+            case 2 (Change quantity):
+            - Prompt "Quantity: "
+            - Call out.inputs() and store in item.quantity
+            - Print "Quantity changed successfully!"
+            - Print blank line
+            - break
+            
+            case 3 (Change unit):
+            - Prompt "Unit: "
+            - Call out.inputs() and store in item.unit
+            - Print "Unit changed successfully!"
+            - Print blank line
+            - break
+            
+            case 4 (None):
+            - return immediately (exit changeItem)
+            
+            default (Invalid):
+            - Print "Invalid choice!"
+            - break
+      
+      b. Loop back to step 7 (confirmItem again with updated data)
+
+3. After schema() returns, Modal::init() continues:
+   - Displays exit prompt and waits for Enter
+   - Returns to PantryManagerPage
+
+
+================================================================================
+                        VIEW PANTRY FLOW
+================================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ViewPantryPage::init() → schema()
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Entry Point: User selects "View Pantry" from Pantry Manager menu
+
+Main Flow:
+1. Page::init() is called (inherited from Page base class)
+   a. Call out.clear() to clear screen
+   b. If showheader == true, call out.subheader("View Pantry")
+   c. Call schema() (ViewPantryPage's override)
+   d. Print horizontal rule
+   e. Call displayOptions() to show menu
+   f. Print blank line
+   g. Call handleInput() to process user choice
+   h. If user chose "Back", return
+   i. Otherwise, loop back to step 1a (re-init)
+
+2. ViewPantryPage::schema() executes:
+   
+   1. Print horizontal rule
+   2. Print blank line
+   3. Call Pantry::loadAll() to get all items
+      ... steps from Pantry::loadAll (see above)
+   4. Check if items.size() == 0:
+      a. If empty:
+         - Print "Your pantry is empty."
+         - Print blank line
+         - return from schema()
+   5. If not empty:
+      a. Print "Pantry Inventory (X item(s)):" where X = items.size()
+      b. Print blank line
+      c. Loop through items (index i from 0 to items.size()):
+         - Get item = items[i]
+         - Build line string:
+           * to_string(i + 1) + ". "  (display number)
+           * item.name + " - "
+           * item.quantity + " " + item.unit
+           * " (ID: " + to_string(item.id) + ")"
+         - Print line
+      d. Print blank line
+   6. Return from schema()
+
+3. After schema() returns, Page::init() continues:
+   - Displays Back option
+   - Waits for user to press Back
+   - Returns to PantryManagerPage
+
+
+================================================================================
+                        UPDATE QUANTITY FLOW
+================================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+UpdatePantryItemModal::init() → schema()
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Entry Point: User selects "Update Quantity" from Pantry Manager menu
+
+Main Flow:
+1. Modal::init() is called (inherited from Modal base class)
+   a. Call out.clear() to clear screen
+   b. Call schema() (UpdatePantryItemModal's override)
+   c. Print blank line
+   d. Display "Press Enter to exit..." prompt
+   e. Wait for cin.get()
+
+2. UpdatePantryItemModal::schema() executes:
+   
+   1. Print horizontal rule
+   2. Print blank line
+   3. Call Pantry::loadAll() to get all items
+      ... steps from Pantry::loadAll (see above)
+   
+   4. Check if items.size() == 0:
+      a. If empty:
+         - Print "Your pantry is empty. Nothing to update."
+         - Print blank line
+         - return from schema()
+   
+   5. If not empty:
+      a. Print "Current Pantry Items:"
+      b. Print blank line
+      c. Loop through items (index i from 0 to items.size()):
+         - Get item = items[i]
+         - Build line string (same format as View):
+           * to_string(i + 1) + ". "
+           * item.name + " - "
+           * item.quantity + " " + item.unit
+           * " (ID: " + to_string(item.id) + ")"
+         - Print line
+   
+   6. Print blank line
+   7. Call out.inputi("Enter ingredient ID to update: ")
+      - Store result in id variable
+   
+   8. Call Pantry::findById(id) to get the item
+      ... steps from Pantry::findById (see above)
+   
+   9. Check if item.id == 0 (not found):
+      a. If not found:
+         - Print blank line
+         - Print "Ingredient not found!"
+         - Print blank line
+         - return from schema()
+   
+   10. If found:
+       a. Print blank line
+       b. Print "Current details:"
+       c. Call item.displayPreview()
+          ... steps from Pantry::displayPreview (see above)
+       d. Prompt "Enter new quantity: "
+       e. Call out.inputs() and store in newQuantity string
+       f. Call item.updateQuantity(newQuantity)
+          ... steps from Pantry::updateQuantity (see above)
+       g. Check return value:
+          
+          If true (update successful):
+          - Print blank line
+          - Print "Quantity updated successfully!"
+          - Print blank line
+          - Print "Updated details:"
+          - Call item.displayPreview() again to show new values
+          
+          If false (update failed):
+          - Print blank line
+          - Print "Error: Could not update quantity."
+          - Print blank line
+   
+   11. Return from schema()
+
+3. After schema() returns, Modal::init() continues:
+   - Displays exit prompt and waits for Enter
+   - Returns to PantryManagerPage
+
+
+================================================================================
+                        DELETE INGREDIENT FLOW
+================================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DeletePantryItemModal::init() → schema()
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Entry Point: User selects "Delete Ingredient" from Pantry Manager menu
+
+Main Flow:
+1. Modal::init() is called (inherited from Modal base class)
+   a. Call out.clear() to clear screen
+   b. Call schema() (DeletePantryItemModal's override)
+   c. Print blank line
+   d. Display "Press Enter to exit..." prompt
+   e. Wait for cin.get()
+
+2. DeletePantryItemModal::schema() executes:
+   
+   1. Print horizontal rule
+   2. Print blank line
+   3. Call Pantry::loadAll() to get all items
+      ... steps from Pantry::loadAll (see above)
+   
+   4. Check if items.size() == 0:
+      a. If empty:
+         - Print "Your pantry is empty. Nothing to delete."
+         - Print blank line
+         - return from schema()
+   
+   5. If not empty:
+      a. Print "Current Pantry Items:"
+      b. Print blank line
+      c. Loop through items (index i from 0 to items.size()):
+         - Get item = items[i]
+         - Build line string (same format as View):
+           * to_string(i + 1) + ". "
+           * item.name + " - "
+           * item.quantity + " " + item.unit
+           * " (ID: " + to_string(item.id) + ")"
+         - Print line
+   
+   6. Print blank line
+   7. Call out.inputi("Enter ingredient ID to delete: ")
+      - Store result in id variable
+   
+   8. Call Pantry::findById(id) to get the item
+      ... steps from Pantry::findById (see above)
+   
+   9. Check if item.id == 0 (not found):
+      a. If not found:
+         - Print blank line
+         - Print "Ingredient not found!"
+         - Print blank line
+         - return from schema()
+   
+   10. If found:
+       a. Print blank line
+       b. Print "Ingredient to delete:"
+       c. Call item.displayPreview()
+          ... steps from Pantry::displayPreview (see above)
+       d. Call out.inputYesNo("Are you sure you want to delete this ingredient? (y/n): ")
+          - Store result in confirm boolean
+       e. Check confirm value:
+          
+          If true (user confirmed deletion):
+          1. Call Pantry::deleteById(id)
+             ... steps from Pantry::deleteById (see above)
+          2. Check return value:
+             
+             If true (deletion successful):
+             - Print blank line
+             - Print "Ingredient deleted successfully!"
+             - Print blank line
+             
+             If false (deletion failed):
+             - Print blank line
+             - Print "Error: Could not delete ingredient."
+             - Print blank line
+          
+          If false (user cancelled):
+          - Print blank line
+          - Print "Deletion cancelled."
+          - Print blank line
+   
+   11. Return from schema()
+
+3. After schema() returns, Modal::init() continues:
+   - Displays exit prompt and waits for Enter
+   - Returns to PantryManagerPage
+
+
+================================================================================
+                        NAVIGATION INTEGRATION
+================================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PantryManagerPage Flow
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Entry Point: User selects "Pantry Inventory Manager" from main menu
+
+1. PantryManagerPage::init() is called (inherited from Page)
+   a. Clear screen
+   b. Display header: "Pantry Inventory Manager"
+   c. Call schema() (empty - no extra content)
+   d. Display horizontal rule
+   e. Display options:
+      * 1. Add Ingredient
+      * 2. View Pantry
+      * 3. Update Quantity
+      * 4. Delete Ingredient
+      * 5. Back
+   f. Print blank line
+   g. Prompt "Select an option: " via handleInput()
+   h. Get user choice as integer
+
+2. Based on user choice:
+   
+   Choice 1 (Add Ingredient):
+   - Execute lambda: []() { AddPantryItemModal addModal; addModal.init(); }
+   - Creates AddPantryItemModal object
+   - Calls init() on modal
+   - ... (see Add Ingredient Flow above)
+   - After modal exits, returns to PantryManagerPage::init() step 1a
+   
+   Choice 2 (View Pantry):
+   - Execute lambda: []() { ViewPantryPage viewPage; viewPage.init(); }
+   - Creates ViewPantryPage object
+   - Calls init() on page
+   - ... (see View Pantry Flow above)
+   - After page exits, returns to PantryManagerPage::init() step 1a
+   
+   Choice 3 (Update Quantity):
+   - Execute lambda: []() { UpdatePantryItemModal updateModal; updateModal.init(); }
+   - Creates UpdatePantryItemModal object
+   - Calls init() on modal
+   - ... (see Update Quantity Flow above)
+   - After modal exits, returns to PantryManagerPage::init() step 1a
+   
+   Choice 4 (Delete Ingredient):
+   - Execute lambda: []() { DeletePantryItemModal deleteModal; deleteModal.init(); }
+   - Creates DeletePantryItemModal object
+   - Calls init() on modal
+   - ... (see Delete Ingredient Flow above)
+   - After modal exits, returns to PantryManagerPage::init() step 1a
+   
+   Choice 5 (Back):
+   - handleInput() returns "<back>"
+   - init() detects back command and returns
+   - Returns to IndexPage (main menu)
+
+3. Loop continues until user selects Back
+
+
+================================================================================
+                            DATA PERSISTENCE
+================================================================================
+
+CSV File Structure (./data/pantry.csv):
+────────────────────────────────────────────────────────────────────────────
+
+Format: id,name,quantity,unit
+
+Example rows:
+1,flour,2,cups
+2,sugar,500,g
+3,salt,1,tsp
+4,butter,250,g
+
+File Operations:
+- Created automatically by CSV class constructor if missing
+- Read operations load entire file into memory (2D vector)
+- Write operations overwrite entire file with updated data
+- No file locking - single-user assumption
+- IDs are auto-incremented based on maximum existing ID
+
+Error Handling:
+- Missing file: Created automatically
+- Invalid ID parsing: Defaults to 0
+- Empty pantry: Functions return gracefully with messages
+- Failed operations: Return false/print error messages
+
+
+================================================================================
+                            SUMMARY
+================================================================================
+
+The Pantry Inventory Manager follows a consistent pattern:
+
+1. User Navigation:
+   IndexPage → PantryManagerPage → Specific Modal/Page → Back to PantryManagerPage
+
+2. Data Flow:
+   User Input → Pantry Object → CSV File → Load Back → Display
+
+3. Modal Pattern (Add/Update/Delete):
+   - Collect input
+   - Display preview
+   - Confirm action
+   - Perform operation
+   - Show result
+   - Auto-return to parent
+
+4. Page Pattern (View):
+   - Load all data
+   - Display formatted list
+   - Wait for Back command
+   - Return to parent
+
+5. Core Operations:
+   - All CRUD operations go through pantry.csv
+   - IDs are auto-generated on save
+   - Updates and deletes require valid ID lookup
+   - Empty state is handled gracefully in all flows
+
+================================================================================
+                            END OF FLOW DOCUMENTATION
+================================================================================
