@@ -88,7 +88,6 @@ generate: uses MealPlanner::generateGroceryist() to create a grocery list with m
 add: uses GroceryList::addTask() to manually add items to the grocery list
 remove: uses GroceryList::removeTask() to remove an item from the grocery list or the GroceryManager::removeList() to remove the entire grocery list 
 view: uses GroceryManager::getList() to check the recipe ingredient list against the pantry
-sync: uses GroceryController::syncWithPantry() to add purchased items to the pantry.
 
 
 Sample Output:
