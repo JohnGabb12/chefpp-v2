@@ -21,36 +21,197 @@ Brief Background
 	Cooking should be a joy, not a chore. Chef++ is built to make your time in the kitchen precise, effortless, and organized. Our system helps our users monitor their pantry stocks with our Pantry Inventory Manager. Chef++ also boasts its recipe manager, allowing users to access their favorite recipes in one clean, organized space. Finally, users can map out their entire week and know exactly what to buy with our Meal Planner. With Chef++, your kitchen—now compiled. 
 
 Navigation tree:
-Index
+Index (Page)
 │
-├── Recipe Manager (Page)
-│   ├── add (Modal)
-│   ├── search (Page)
-│   │   ├── by recipe name
-│   │   ├── by recipe ingredients
-│   │   ├── by id
-│   │   └── list all
-│   ├── delete (Modal)
-│   └── check (Placeholder)
+├── 1. Recipe Manager (Page)
+│   │   Purpose: Manage recipe collection (add, search, view, delete)
+│   │   File: src/recipemanager/recipemanager.cpp
+│   │
+│   ├── 1. Add Recipe (Modal)
+│   │   │   Collects: name, ingredients (comma-separated), instructions
+│   │   │   Validates: displays preview, confirms before saving
+│   │   │   File: src/recipemanager/addrecipe.cpp
+│   │   │   Data: saves to ./data/recipes.csv with auto-incremented ID
+│   │   └── Returns to Recipe Manager
+│   │
+│   ├── 2. Search Recipe (Page)
+│   │   │   Provides multiple search methods with result actions
+│   │   │   File: src/recipemanager/searchrecipe.cpp
+│   │   │
+│   │   ├── 1. By Recipe Name
+│   │   │   Prompts for name substring, displays matching recipes
+│   │   │
+│   │   ├── 2. By Ingredients
+│   │   │   Prompts for ingredient name, finds recipes containing it
+│   │   │
+│   │   ├── 3. By ID
+│   │   │   Prompts for numeric recipe ID, displays exact match
+│   │   │
+│   │   └── 4. List All
+│   │       Displays all recipes with numbered list
+│   │       │
+│   │       ├── 1. View Recipe (Modal)
+│   │       │   │   Shows: recipe name, ingredients with amounts, instructions
+│   │       │   │   File: src/recipemanager/viewrecipe.cpp
+│   │       │   │   Optional: Generate grocery list for missing ingredients
+│   │       │   │   - Compares recipe ingredients vs pantry inventory
+│   │       │   │   - Adds missing/insufficient items to grocery.csv
+│   │       │   │   - Handles unit mismatches (no auto-conversion)
+│   │       │   └── Returns to Search Results
+│   │       │
+│   │       ├── 2. Delete Recipe (from results)
+│   │       │   Confirms deletion, removes from recipes.csv
+│   │       │
+│   │       ├── 3. Research
+│   │       │   Returns to search method selection
+│   │       │
+│   │       ├── 4. List All (refresh)
+│   │       │   Reloads and displays all recipes
+│   │       │
+│   │       └── 5. Back
+│   │           Returns to Recipe Manager
+│   │
+│   ├── 3. Delete Recipe (Modal)
+│   │   │   Lists all recipes, prompts for ID to delete
+│   │   │   Confirms before deletion, removes from recipes.csv
+│   │   │   File: src/recipemanager/deleterecipe.cpp
+│   │   └── Returns to Recipe Manager
+│   │
+│   └── 4. Back
+│       Returns to Main Menu
 │
-├── Pantry Inventory Manager (Placeholder)
-│   ├── add
-│   ├── view
-│   ├── update
-│   └── delete
+├── 2. Pantry Inventory Manager (Page)
+│   │   Purpose: Track current ingredient inventory with CRUD operations
+│   │   File: src/pantrymanager/pantrymanager.cpp
+│   │   Features: Duplicate prevention (merges quantities by name)
+│   │
+│   ├── 1. Add Ingredient (Modal)
+│   │   │   Collects: name, quantity, unit
+│   │   │   Validates: displays preview, allows editing before confirming
+│   │   │   Duplicate Handling: If ingredient name exists (case-insensitive),
+│   │   │                       adds quantities instead of creating duplicate
+│   │   │   File: src/pantrymanager/addpantryitem.cpp
+│   │   │   Data: saves to ./data/pantry.csv with auto-incremented ID
+│   │   └── Returns to Pantry Manager
+│   │
+│   ├── 2. View Pantry (Page)
+│   │   │   Lists all pantry items with quantities and units
+│   │   │   Displays: "name - quantity unit (ID: X)"
+│   │   │   File: src/pantrymanager/viewpantry.cpp
+│   │   └── Returns to Pantry Manager
+│   │
+│   ├── 3. Update Quantity (Modal)
+│   │   │   Lists all items, prompts for ID to update
+│   │   │   Shows current details, accepts new quantity
+│   │   │   Updates pantry.csv, displays updated details
+│   │   │   File: src/pantrymanager/updatepantryitem.cpp
+│   │   └── Returns to Pantry Manager
+│   │
+│   ├── 4. Delete Ingredient (Modal)
+│   │   │   Lists all items, prompts for ID to delete
+│   │   │   Shows item details, confirms before deletion
+│   │   │   Removes from pantry.csv
+│   │   │   File: src/pantrymanager/deletepantryitem.cpp
+│   │   └── Returns to Pantry Manager
+│   │
+│   └── 5. Back
+│       Returns to Main Menu
 │
-├── Meal Planner (Placeholder)
-│   ├── generate
-│   └── view
+├── 3. Meal Planner (Page)
+│   │   Purpose: Create and view weekly meal schedules using recipes
+│   │   File: src/mealplanner/mealplanner.cpp
+│   │   Data: stores plans in ./data/mealplan.csv
+│   │
+│   ├── 1. Generate (Modal)
+│   │   │   Creates 7-day meal plan for a labeled week
+│   │   │   File: src/mealplanner/generatemealplan.cpp
+│   │   │   Flow:
+│   │   │   1. Prompt for week label (e.g., "2025-W43")
+│   │   │   2. Option to clear existing plan for that week
+│   │   │   3. Choose mode:
+│   │   │      a. Auto-fill: Cycles through available recipes for 7 days
+│   │   │      b. Manual: Select recipe for each day (Mon-Sun)
+│   │   │   4. Saves each day's meal to mealplan.csv
+│   │   │      Format: id,week,day,recipeId,recipeName
+│   │   │   5. Replaces existing day entries (same week + day)
+│   │   └── Returns to Meal Planner
+│   │
+│   ├── 2. View (Page)
+│   │   │   Displays meal plan for a specific week
+│   │   │   File: src/mealplanner/viewmealplan.cpp
+│   │   │   Flow:
+│   │   │   1. Prompt for week label
+│   │   │   2. Load and display entries for that week
+│   │   │   3. Shows: "- Day: RecipeName (Recipe ID: X)"
+│   │   └── Returns to Meal Planner
+│   │
+│   └── 3. Back
+│       Returns to Main Menu
 │
-├── Grocery List Manager (Placeholder)
-│   ├── generate
-│   ├── add
-│   ├── remove
-│   ├── view
-│   └── sync
+├── 4. Grocery List Manager (Page)
+│   │   Purpose: Track shopping needs and sync with pantry
+│   │   File: src/grocerymanager/grocerymanager.cpp
+│   │   Features: Duplicate prevention (merges by name+unit)
+│   │   Data: stores items in ./data/grocery.csv
+│   │
+│   ├── 1. Generate (Modal)
+│   │   │   Creates grocery list from a recipe vs pantry comparison
+│   │   │   File: src/grocerymanager/generategrocery.cpp
+│   │   │   Flow:
+│   │   │   1. Display all recipes, prompt for selection
+│   │   │   2. For each ingredient in selected recipe:
+│   │   │      a. Parse: name, amount, unit (supports '|' or ':' separator)
+│   │   │      b. Check pantry for ingredient (case-insensitive name)
+│   │   │      c. If not in pantry: add full amount to grocery list
+│   │   │      d. If in pantry with unit mismatch: add full amount (no conversion)
+│   │   │      e. If in pantry with match: calculate shortage (need - have)
+│   │   │         - Add difference if positive
+│   │   │         - Skip if sufficient quantity available
+│   │   │   3. Uses GroceryItem::save() which merges duplicate name+unit
+│   │   │   4. Displays: "Grocery list generated based on pantry availability."
+│   │   └── Returns to Grocery Manager
+│   │
+│   ├── 2. Add (Modal)
+│   │   │   Manually add item to grocery list
+│   │   │   Collects: name, quantity, unit
+│   │   │   Validates: displays preview, allows editing
+│   │   │   Duplicate Handling: Merges quantities for same name+unit
+│   │   │   File: src/grocerymanager/addgroceryitem.cpp
+│   │   │   Data: saves to grocery.csv with auto-incremented ID
+│   │   └── Returns to Grocery Manager
+│   │
+│   ├── 3. Remove (Modal)
+│   │   │   Delete item from grocery list
+│   │   │   Lists all items, prompts for ID to delete
+│   │   │   Confirms before deletion, removes from grocery.csv
+│   │   │   File: src/grocerymanager/removegroceryitem.cpp
+│   │   └── Returns to Grocery Manager
+│   │
+│   ├── 4. View (Page)
+│   │   │   Lists all grocery items
+│   │   │   Displays: "name - quantity unit (ID: X)"
+│   │   │   File: src/grocerymanager/viewgrocery.cpp
+│   │   └── Returns to Grocery Manager
+│   │
+│   ├── 5. Sync (Modal)
+│   │   │   Transfer all grocery items to pantry and clear list
+│   │   │   File: src/grocerymanager/syncgrocery.cpp
+│   │   │   Flow:
+│   │   │   1. Display grocery items count
+│   │   │   2. Confirm: "Transfer all items to pantry? (y/n)"
+│   │   │   3. For each grocery item:
+│   │   │      a. Create Pantry object with item data
+│   │   │      b. Call Pantry::save() (uses duplicate merge logic)
+│   │   │      c. Print "Added [name] to pantry"
+│   │   │   4. Call GroceryItem::clearAll() to empty grocery.csv
+│   │   │   5. Display: "All items synced to pantry. Grocery list cleared."
+│   │   └── Returns to Grocery Manager
+│   │
+│   └── 6. Back
+│       Returns to Main Menu
 │
-└── Exit
+└── 5. Exit
+    Terminates application
 
 Main Features
 Recipe Manager

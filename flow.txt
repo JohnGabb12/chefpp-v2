@@ -716,6 +716,575 @@ The Pantry Inventory Manager follows a consistent pattern:
    - Updates and deletes require valid ID lookup
    - Empty state is handled gracefully in all flows
 
+
+================================================================================
+                    GROCERY LIST MANAGER - FLOW DOCUMENTATION
+================================================================================
+
+The Grocery List Manager helps track shopping needs with five main operations:
+Generate (from recipe), Add, Remove, View, and Sync (to pantry).
+
+KEY FEATURES:
+- Duplicate Prevention: When adding grocery items, the system checks if an
+  item with the same name AND unit already exists (case-insensitive name). 
+  If found, it adds the new quantity to the existing quantity.
+- Recipe Integration: Generate grocery lists from recipes by comparing 
+  ingredient requirements against current pantry availability.
+- Pantry Sync: Transfer all grocery items to pantry and clear the list.
+
+================================================================================
+                        CORE GROCERY METHODS
+================================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+GroceryItem::loadAll()
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Purpose: Load all grocery items from CSV file
+
+Steps:
+1. Create empty vector<GroceryItem> items
+2. Create CSV object with filename "grocery.csv"
+3. Call csv.read() to get 2D vector of strings
+4. Loop through each row in data
+   - If row has at least 4 elements, call GroceryItem::fromCSVRow(row)
+   - Push resulting GroceryItem to items vector
+5. Return items vector
+
+Used by: All grocery modals and pages
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+GroceryItem::save()
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Purpose: Add grocery item to CSV, merging quantities if duplicate exists
+
+Steps:
+1. Create CSV object with filename "grocery.csv"
+2. Call csv.read() to get existing data
+3. Call findByNameAndUnit(name, unit) to check for duplicate
+4. If existing.id > 0 (duplicate found):
+   a. Parse existing.quantity and this->quantity to doubles
+   b. Calculate totalQty = existingQty + newQty
+   c. Loop through data to find matching id
+   d. Update quantity column with totalQty
+   e. Write data back to file
+   f. Print "Item already exists! Updated quantity"
+   g. Return
+5. If no duplicate:
+   a. Find maximum ID in data
+   b. Set this->id = maxId + 1
+   c. Append toCSVRow() to data
+   d. Write data back to file
+   e. Print success message
+
+Used by: AddGroceryItemModal, GenerateGroceryFromRecipeModal, ViewRecipeModal
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+GroceryItem::findByNameAndUnit(string searchName, string searchUnit)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Purpose: Find grocery item by case-insensitive name and exact unit match
+
+Steps:
+1. Call loadAll() to get all items
+2. Convert searchName to lowercase
+3. Loop through all items:
+   a. Convert item.name to lowercase
+   b. If lowerItemName == lowerSearchName AND item.unit == searchUnit:
+      - Return item
+4. Return empty GroceryItem() if not found
+
+Used by: GroceryItem::save() for duplicate detection
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+GroceryItem::clearAll()
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Purpose: Remove all items from grocery list
+
+Steps:
+1. Create CSV object with filename "grocery.csv"
+2. Create empty vector<vector<string>> data
+3. Call csv.write(data) to overwrite file with empty content
+
+Used by: SyncGroceryWithPantryModal
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+GroceryItem::deleteById(int id)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Purpose: Delete a specific grocery item by ID
+
+Steps:
+1. Create CSV object with filename "grocery.csv"
+2. Read all data
+3. Create newData vector excluding row with matching id
+4. Write newData back to file
+5. Return true if found and deleted, false otherwise
+
+Used by: RemoveGroceryItemModal
+
+
+================================================================================
+                    GENERATE GROCERY LIST FROM RECIPE FLOW
+================================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+GenerateGroceryFromRecipeModal::schema()
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Entry Point: User selects "Generate" from Grocery List Manager menu
+
+Main Flow:
+1. Print subheader "Generate Grocery List from Recipe"
+2. Load all recipes using Recipe::loadAll()
+3. If no recipes available:
+   - Print "No recipes available"
+   - Return
+4. Display all recipes with numbers:
+   - Loop through recipes, print: "1. Recipe Name (ID: X)"
+5. Prompt user to select recipe number
+6. Validate selection, get chosen recipe
+7. For each ingredient in recipe.ingredients:
+   
+   STEP A: Parse Ingredient Token
+   ────────────────────────────────────────────────────────────────────────
+   a. Initialize name, amount, unit as empty strings
+   b. Check for '|' separator:
+      - Find first '|' position
+      - Find second '|' position
+      - If both found: extract name, amount, unit
+   c. If no '|' found, check for ':' separator:
+      - Find first ':' position
+      - Find second ':' position
+      - If both found: extract name, amount, unit
+   d. If no separators: use entire token as name
+   e. Parse amount to double (need), default to 0.0 on error
+   
+   STEP B: Check Pantry Availability
+   ────────────────────────────────────────────────────────────────────────
+   f. Load all pantry items using Pantry::loadAll()
+   g. Convert ingredient name to lowercase for matching
+   h. Loop through pantry items:
+      - Convert pantry item name to lowercase
+      - If names match (case-insensitive):
+        * Set found = true
+        * Get pantry unit
+        * Parse pantry quantity to double (have)
+        * Break loop
+   
+   STEP C: Add to Grocery List Based on Availability
+   ────────────────────────────────────────────────────────────────────────
+   i. If ingredient not in pantry:
+      - Use amount or default to "1"
+      - Create GroceryItem with name, quantity, unit
+      - Call save()
+   j. If in pantry but units don't match:
+      - Use amount or default to "1"
+      - Create GroceryItem (no unit conversion)
+      - Call save()
+   k. If in pantry with matching/empty units:
+      - Calculate difference = need - have
+      - If need is 0.0 (unknown) and have <= 0.0:
+        * Add quantity "1" to grocery list
+      - If difference > 0.0:
+        * Convert difference to string
+        * Create GroceryItem with difference quantity
+        * Call save()
+
+8. Print "Grocery list generated based on pantry availability."
+9. Return
+
+Used by: GroceryManagerPage option "Generate"
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ViewRecipeModal - Generate Grocery Action
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Entry Point: User views a recipe and is prompted to generate grocery list
+
+Main Flow:
+1. Display recipe preview (name, ingredients, instructions)
+2. Prompt: "Generate grocery list for missing ingredients? (y/n):"
+3. If user answers 'y':
+   a. Call generateGroceryForRecipe() method
+   b. (Same logic as GenerateGroceryFromRecipeModal but uses current recipe)
+   c. Parse each ingredient using helper methods:
+      - parseIngredient(): Extract name, amount, unit from token
+      - findInPantry(): Search pantry for ingredient by name
+      - addToGrocery(): Create and save grocery item
+   d. For each ingredient:
+      - Parse token into name, amount, unit
+      - Check if in pantry
+      - If not found or insufficient: add to grocery list
+      - Handle unit mismatches by adding full amount
+   e. Print "Grocery list generated based on pantry availability."
+4. Modal exits and returns to parent page
+
+Key Helper Methods:
+- parseIngredient(token, name, amount, unit): Handles both '|' and ':' separators
+- findInPantry(name, quantity, unit): Returns true if found with values
+- addToGrocery(name, quantity, unit): Creates and saves item
+
+
+================================================================================
+                        SYNC GROCERY TO PANTRY FLOW
+================================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SyncGroceryWithPantryModal::schema()
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Entry Point: User selects "Sync" from Grocery List Manager menu
+
+Purpose: Transfer all grocery items to pantry inventory and clear grocery list
+
+Main Flow:
+1. Print subheader "Sync Grocery List to Pantry"
+2. Load all grocery items using GroceryItem::loadAll()
+3. If grocery list is empty:
+   - Print "Grocery list is empty. Nothing to sync."
+   - Return
+4. Display grocery items count
+5. Prompt confirmation: "Transfer all items to pantry? (y/n):"
+6. If user confirms:
+   a. Loop through each grocery item:
+      - Create new Pantry object with grocery item data
+      - Call pantry.save() (uses duplicate merge logic)
+      - Print "Added [name] to pantry"
+   b. Call GroceryItem::clearAll() to empty grocery list
+   c. Print "All items synced to pantry. Grocery list cleared."
+7. If user cancels:
+   - Print "Sync cancelled."
+8. Return
+
+Notes:
+- Uses Pantry::save() which merges quantities for duplicate names
+- All grocery items are added/merged into pantry
+- Grocery list is completely cleared after successful sync
+
+
+================================================================================
+                        ADD/REMOVE/VIEW GROCERY FLOWS
+================================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+AddGroceryItemModal::schema()
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Entry Point: User selects "Add" from Grocery List Manager menu
+
+Main Flow:
+1. Print horizontal rule
+2. Prompt for item name, quantity, unit (similar to AddPantryItemModal)
+3. Display preview of entered item
+4. Prompt confirmation: "Are you sure? (y/n):"
+5. If confirmed:
+   - Call item.save() (uses duplicate merge logic)
+   - Reset item
+   - Return
+6. If not confirmed:
+   - Offer to change: name, quantity, unit, or none
+   - Loop back to confirmation
+7. Return
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+RemoveGroceryItemModal::schema()
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Entry Point: User selects "Remove" from Grocery List Manager menu
+
+Main Flow:
+1. Print horizontal rule
+2. Load all grocery items
+3. If list is empty:
+   - Print "Grocery list is empty."
+   - Return
+4. Display all items with IDs
+5. Prompt for item ID to remove
+6. Find item by ID
+7. If not found:
+   - Print "Item not found!"
+   - Return
+8. Display item details
+9. Prompt confirmation: "Delete this item? (y/n):"
+10. If confirmed:
+    - Call GroceryItem::deleteById(id)
+    - Print success or error message
+11. If cancelled:
+    - Print "Deletion cancelled."
+12. Return
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ViewGroceryPage::schema()
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Entry Point: User selects "View" from Grocery List Manager menu
+
+Main Flow:
+1. Print horizontal rule
+2. Load all grocery items
+3. If list is empty:
+   - Print "Grocery list is empty."
+   - Return
+4. Print "Grocery List (X item(s)):" where X = count
+5. Loop through items, display:
+   - "1. name - quantity unit (ID: X)"
+6. Return
+
+
+================================================================================
+                    MEAL PLANNER - FLOW DOCUMENTATION
+================================================================================
+
+The Meal Planner helps organize weekly meal schedules by selecting recipes
+for each day of the week.
+
+KEY FEATURES:
+- Week-based Planning: Plan meals for a labeled week (e.g., "2025-W43")
+- Auto-fill or Manual: Choose to auto-assign recipes or pick per day
+- Recipe Integration: Links to recipes by ID for ingredient access
+- Persistent Storage: Saves plans to mealplan.csv
+
+================================================================================
+                        CORE MEAL PLAN METHODS
+================================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MealPlan::save()
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Purpose: Save or update a meal plan entry for a specific week and day
+
+Steps:
+1. Create CSV object with filename "mealplan.csv"
+2. Read existing data
+3. Find maximum ID in data
+4. Check for existing entry with same week + day:
+   a. If found:
+      - Reuse existing ID
+      - Replace row with updated data
+      - Set replaced = true
+   b. If not found:
+      - Assign new ID (maxId + 1)
+      - Append new row to data
+5. Write data back to file
+6. Print success message with week, day, and recipe name
+7. Return
+
+Used by: GenerateMealPlanModal
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MealPlan::findByWeek(string week)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Purpose: Load all meal plan entries for a specific week
+
+Steps:
+1. Call loadAll() to get all entries
+2. Create empty result vector
+3. Loop through all entries:
+   - If entry.week matches requested week, add to result
+4. Return filtered result vector
+
+Used by: ViewMealPlanPage
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MealPlan::clearWeek(string week)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Purpose: Delete all meal plan entries for a specific week
+
+Steps:
+1. Create CSV object with filename "mealplan.csv"
+2. Read all data
+3. Create filtered vector excluding rows with matching week
+4. Write filtered data back to file
+
+Used by: GenerateMealPlanModal (when user chooses to clear existing plan)
+
+
+================================================================================
+                    GENERATE MEAL PLAN FLOW
+================================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+GenerateMealPlanModal::schema()
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Entry Point: User selects "Generate" from Meal Planner menu
+
+Main Flow:
+1. Print subheader "Generate Meal Plan"
+2. Prompt for week label (e.g., "2025-W43")
+   - Default to "Week" if empty
+3. Prompt: "Clear existing plan for this week? (y/n):"
+   - If yes, call MealPlan::clearWeek(week)
+4. Load all recipes using Recipe::loadAll()
+5. If no recipes available:
+   - Print "No recipes available. Please add recipes first."
+   - Return
+6. Prompt: "Auto-fill 7 days using available recipes? (y/n):"
+
+   OPTION A: Auto-fill Mode
+   ────────────────────────────────────────────────────────────────────────
+   7a. If user chooses auto-fill:
+       - Define days array: ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
+       - Loop through 7 days (index i):
+         * Get recipe = recipes[i % recipes.size()] (cycle through recipes)
+         * Create MealPlan(week, days[i], recipe.id, recipe.name)
+         * Call mp.save()
+       - Print "Meal plan generated for week: [week]"
+       - Return
+
+   OPTION B: Manual Selection Mode
+   ────────────────────────────────────────────────────────────────────────
+   7b. If user chooses manual:
+       - Print "Pick a recipe for each day:"
+       - Loop through 7 days (index i):
+         * Print day name (Mon, Tue, etc.)
+         * Display all recipes with numbers
+         * Prompt user to select recipe number
+         * Validate selection (must be 1 to recipes.size())
+         * Get chosen recipe
+         * Create MealPlan(week, days[i], chosen.id, chosen.name)
+         * Call mp.save()
+         * Print blank line
+       - Print "Meal plan saved for week: [week]"
+       - Return
+
+8. Return
+
+Used by: MealPlannerPage option "Generate"
+
+
+================================================================================
+                        VIEW MEAL PLAN FLOW
+================================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ViewMealPlanPage::schema()
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Entry Point: User selects "View" from Meal Planner menu
+
+Main Flow:
+1. Print horizontal rule
+2. Prompt for week label to view
+3. If no week provided:
+   - Print "No week provided."
+   - Return
+4. Call MealPlan::findByWeek(week) to load entries
+5. If no entries found:
+   - Print "No meal plan found for week: [week]"
+   - Return
+6. Print "Meal Plan for [week] (X item(s)):"
+7. Loop through entries:
+   - Print "- [day]: [recipeName] (Recipe ID: [recipeId])"
+8. Return
+
+Used by: MealPlannerPage option "View"
+
+
+================================================================================
+                        DATA PERSISTENCE SUMMARY
+================================================================================
+
+CSV File Structures:
+────────────────────────────────────────────────────────────────────────────
+
+pantry.csv:
+Format: id,name,quantity,unit
+Example: 1,flour,2,cups
+
+grocery.csv:
+Format: id,name,quantity,unit
+Example: 1,milk,1,liter
+
+mealplan.csv:
+Format: id,week,day,recipeId,recipeName
+Example: 1,2025-W43,Mon,5,Spaghetti Bolognese
+
+recipes.csv:
+Format: id,name,ingredients,instructions
+Example: 1,Pancakes,"flour|2|cups;milk|1|cup","Mix and cook on griddle."
+
+File Operations:
+- All CSV files created automatically in ./data/ directory
+- Read operations load entire file into memory
+- Write operations overwrite entire file
+- No file locking (single-user assumption)
+- IDs auto-incremented based on maximum existing ID
+
+
+================================================================================
+                        INTEGRATION SUMMARY
+================================================================================
+
+Cross-Feature Interactions:
+────────────────────────────────────────────────────────────────────────────
+
+1. Recipe → Grocery List:
+   - Generate grocery list from recipe ingredients
+   - Compare against pantry to determine shopping needs
+   - Add only missing or insufficient items
+
+2. Recipe → Meal Plan:
+   - Select recipes for weekly meal planning
+   - Store recipe ID and name for each day
+
+3. Grocery List → Pantry:
+   - Sync all grocery items to pantry
+   - Merge quantities for duplicate items
+   - Clear grocery list after sync
+
+4. Pantry → Grocery List:
+   - Check pantry availability when generating grocery lists
+   - Calculate ingredient shortages
+   - Skip items already in sufficient quantity
+
+5. Meal Plan → Recipe:
+   - Link to recipes via recipe ID
+   - Display recipe name for each planned day
+   - Future: Could aggregate ingredients for week's groceries
+
+Navigation Flow:
+────────────────────────────────────────────────────────────────────────────
+
+IndexPage (Main Menu)
+├── Recipe Manager
+│   ├── Add Recipe
+│   ├── Search Recipe
+│   │   ├── By Name
+│   │   ├── By Ingredients
+│   │   ├── By ID
+│   │   └── List All
+│   │       └── View Recipe
+│   │           └── Generate Grocery List (optional)
+│   └── Delete Recipe
+│
+├── Pantry Inventory Manager
+│   ├── Add Ingredient (duplicate merge)
+│   ├── View Pantry
+│   ├── Update Quantity
+│   └── Delete Ingredient
+│
+├── Meal Planner
+│   ├── Generate (auto-fill or manual per day)
+│   └── View (by week)
+│
+├── Grocery List Manager
+│   ├── Generate (from recipe vs pantry)
+│   ├── Add (duplicate merge)
+│   ├── Remove
+│   ├── View
+│   └── Sync (to pantry + clear list)
+│
+└── Exit
+
+
 ================================================================================
                             END OF FLOW DOCUMENTATION
 ================================================================================
