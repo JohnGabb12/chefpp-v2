@@ -6,6 +6,7 @@
 #include "recipemanager/recipemanager.cpp"
 #include "pantrymanager/pantrymanager.cpp"
 #include "grocerymanager/grocerymanager.cpp"
+#include "mealplanner/mealplanner.cpp"
 
 class IndexPage : public Page {
 protected:
@@ -33,6 +34,7 @@ public:
     RecipeManagerPage recipeManager;
     PantryManagerPage pantryManager;
     GroceryManagerPage groceryManager;
+    MealPlannerPage mealPlanner;
 
     IndexPage() : Page() {
         // Set to show "Exit" instead of "Back"
@@ -46,6 +48,9 @@ public:
             }),
             Options("Pantry Inventory Manager", [this]() {
                 pantryManager.init();
+            }),
+            Options("Meal Planner", [this]() {
+                mealPlanner.init();
             }),
             Options("Grocery List Manager", [this]() {
                 groceryManager.init();

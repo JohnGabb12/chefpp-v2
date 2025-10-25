@@ -152,6 +152,12 @@ public:
 
             string baseName = names[idx % names.size()];
             string name = baseName;
+            
+            // make name unique when cycling through base names
+            if (id > names.size()) {
+                int variant = (id - 1) / names.size();
+                name = baseName + " Variant " + to_string(variant + 1);
+            }
 
             string ingredients = ingredientsList[idx % ingredientsList.size()];
             string instructions = instructionsList[idx % instructionsList.size()];
