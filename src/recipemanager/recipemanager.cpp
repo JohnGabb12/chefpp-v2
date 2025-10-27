@@ -67,11 +67,6 @@ public:
                 DeleteRecipeModal deleteRecipeModal;  // instantiate modal by value
                 deleteRecipeModal.init();             // run modal and return
             }),
-
-            // Placeholder: check ingredients against a pantry (to be implemented)
-            Options("Check Ingredients", []() {
-                out.coutln("Check Ingredients selected");
-            })
         };
     }
 

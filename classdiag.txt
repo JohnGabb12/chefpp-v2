@@ -1,0 +1,267 @@
+UTILITIES
+
+out
+---
+void coutln(string toOutput)
+void coutln(int toOutput)
+int inputi(string prompt)
+string inputs(string prompt)
+bool inputYesNo(string prompt)
+string trim(string str)
+string toLowerCase(string str)
+void clear()
+string center(string toOutput)
+void header(string toOutput)
+void subheader(string toOutput)
+void br()
+void hr()
+
+
+Options
+string name
+function<void()> callback
+---
+void func()
+
+
+CSV
+- string filename
+---
++ vector<vector<string>> read()
++ bool write(vector<vector<string>> data)
+
+
+Seeder
+---
++ static bool seedRecipes(string filename, int count = 100)
+
+
+BASE UI
+
+Page
+# string header
+# bool showheader
+# bool useExitInsteadOfBack
++ vector<Options> options
+---
++ void init()
+# virtual void schema() = 0
+
+
+Modal
+---
++ void init()
+# virtual void schema() = 0
+
+
+IndexPage : Page
+# string version
++ RecipeManagerPage recipeManager
++ PantryManagerPage pantryManager
++ GroceryManagerPage groceryManager
++ MealPlannerPage mealPlanner
+---
+# void logo()
+# void schema() override
+
+
+RECIPE MANAGER
+
+Recipe
+int id
+string name
+vector<string> ingredients
+string instructions
+---
+void displayPreview()
+static vector<string> parseIngredients(string ingredientsInput)
+vector<string> toCSVRow()
+static Recipe fromCSVRow(vector<string> row)
+void save()
+static vector<Recipe> loadAll()
+static Recipe findById(int rid)
+static bool deleteById(int id)
+
+
+RecipeManagerPage : Page
+---
+# void schema() override
+
+
+AddRecipeModal : Modal
+- Recipe recipe
+---
+- void collectRecipeData()
+- bool confirmRecipe()
+- void changeRecipe()
+# void schema() override
+
+
+ViewRecipeModal : Modal
+- Recipe recipe
+---
+- void parseIngredient(string token, string& name, string& amount, string& unit)
+- bool findInPantry(string itemName, double& quantity, string& unit)
+- void addToGrocery(string name, string quantity, string unit)
+- void generateGroceryForRecipe()
+# void schema() override
+
+
+SearchRecipePage : Page
+- vector<Recipe> searchResults
+- string lastSearchQuery
+- int lastSearchType
+---
+- void searchByName(string query)
+- void searchByIngredients(string query)
+- void listAll()
+- void searchById(int id)
+- void performSearch()
+- void displayResults()
+- void viewRecipeByNumber()
+- void deleteRecipeByNumber()
+# void schema() override
+
+
+DeleteRecipeModal : Modal
+- int recipeId
+---
+- bool confirmDelete(Recipe recipe)
+- void performDelete()
+# void schema() override
+
+
+PANTRY MANAGER
+
+Pantry
+int id
+string name
+string quantity
+string unit
+---
+void displayPreview()
+vector<string> toCSVRow()
+static Pantry fromCSVRow(vector<string> row)
+void save()
+static vector<Pantry> loadAll()
+static Pantry findById(int rid)
+static Pantry findByName(string searchName)
+static bool deleteById(int id)
+bool updateQuantity(string newQuantity)
+
+
+PantryManagerPage : Page
+---
+# void schema() override
+
+
+AddPantryItemModal : Modal
+- Pantry item
+---
+- void collectItemData()
+- bool confirmItem()
+- void changeItem()
+# void schema() override
+
+
+UpdatePantryItemModal : Modal
+---
+# void schema() override
+
+
+DeletePantryItemModal : Modal
+---
+# void schema() override
+
+
+ViewPantryPage : Page
+---
+# void schema() override
+
+
+GROCERY MANAGER
+
+GroceryItem
+int id
+string name
+string quantity
+string unit
+---
+vector<string> toCSVRow()
+static GroceryItem fromCSVRow(vector<string> row)
+static vector<GroceryItem> loadAll()
+static GroceryItem findById(int gid)
+static GroceryItem findByNameAndUnit(string gname, string gunit)
+void save()
+static bool deleteById(int gid)
+static bool updateQuantityById(int gid, string newq)
+static void clearAll()
+
+
+GroceryManagerPage : Page
+---
+# void schema() override
+
+
+AddGroceryItemModal : Modal
+- GroceryItem item
+---
+- void collect()
+- bool confirm()
+- void edit()
+# void schema() override
+
+
+RemoveGroceryItemModal : Modal
+---
+# void schema() override
+
+
+ViewGroceryPage : Page
+---
+# void schema() override
+
+
+SyncGroceryWithPantryModal : Modal
+---
+# void schema() override
+
+
+GenerateGroceryFromRecipeModal : Modal
+- vector<Recipe> recipes
+---
+- void listRecipes()
+- void addMissingForRecipe(Recipe r)
+# void schema() override
+
+
+MEAL PLANNER
+
+MealPlan
+int id
+string week
+string day
+int recipeId
+string recipeName
+---
+vector<string> toCSVRow()
+static MealPlan fromCSVRow(vector<string> row)
+void save()
+static vector<MealPlan> loadAll()
+static vector<MealPlan> findByWeek(string w)
+static void clearWeek(string w)
+
+
+MealPlannerPage : Page
+---
+# void schema() override
+
+
+GenerateMealPlanModal : Modal
+---
+# void schema() override
+
+
+ViewMealPlanPage : Page
+---
+# void schema() override
