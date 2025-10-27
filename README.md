@@ -1,5 +1,9 @@
-# chefpp-v2
+# Chef++
 CLI application for managing your recipes<br>Made with care imo
+
+
+# Class diagram + Navigation Tree
+<img width="2561" height="2164" alt="Frame 44" src="https://github.com/user-attachments/assets/1ae458f3-6d9c-4d7f-97a8-7af62f444844" />
 
 # Development
 ## Requirements
