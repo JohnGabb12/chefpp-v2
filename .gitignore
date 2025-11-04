@@ -2,3 +2,5 @@
 *.exe
 .vscode/
 scripts/
+./build
+*.bat
