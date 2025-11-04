@@ -1,0 +1,54 @@
+Project summary — chefpp-v2
+
+Overview
+
+This repository is a small console-based chef/recipe manager written in C++ (targeting MSVC/C++17). The app is organized into reusable UI primitives (Page, Modal), small system utilities (out, CSV, Options), and feature areas (recipes, pantry, grocery, meal planner).
+
+Files to know
+
+- main.cpp
+  - Defines global `int width = 80` used by output formatting.
+  - Creates `IndexPage` and calls `index.init()` as the program entry point.
+
+- vendor/base/page.h
+  - `Page` class: base class for interactive pages. Provides `init()` which prints header, calls `schema()`, shows options, and handles user choice.
+  - Pages declare `schema()` to render body content; options appear at the end.
+
+- vendor/base/modal.h
+  - `Modal` class: lightweight one-shot UI that displays content and waits for Enter to return.
+
+- vendor/sys/out.h
+  - `out` global: helper methods like `coutln()`, `inputi()`, `inputs()`, `inputYesNo()`, `trim()`, `toLowerCase()`, `clear()`, `header()`, `subheader()`, `hr()`, `br()`, and `center()`.
+  - Use `out.` to call these utilities.
+
+- vendor/sys/options.h
+  - `Options` struct: stores a label and a callback `function<void()>` used to populate `Page::options`.
+
+- vendor/sys/csv.h
+  - `CSV` helper: read/write CSV files under `./data/`, with quoting and escaping, and file/directory auto-creation.
+
+- src/index.cpp
+  - `IndexPage` wiring: shows ASCII logo and provides options for the managers (Recipe, Pantry, Grocery, Meal Planner).
+
+Feature modules (high level)
+
+- src/recipemanager/
+  - AddRecipeModal (addrecipe.cpp)
+  - SearchRecipePage (searchrecipe.cpp)
+  - ViewRecipeModal (viewrecipe.cpp)
+  - DeleteRecipeModal (deleterecipe.cpp)
+  - Recipe model (recipe.cpp) — CSV-backed, upgraded to include an `id` column, ingredient measurement parsing, save/load/delete/migration helpers.
+
+- src/pantrymanager/ — pantry CRUD and searching utilities (pantry.cpp, add/view/update/delete modals).
+- src/grocerymanager/ — grocery list CRUD, generate from recipes and sync to pantry.
+- src/mealplanner/ — meal plan save/load and simple weekly generation.
+
+How the flow works
+
+- Pages: when `Page::init()` runs it clears the screen, shows header (if enabled), calls `schema()`, prints options and a back/exit choice. When an option is chosen, its callback runs (can `init()` another `Page` or a `Modal`). After the callback returns the parent page re-renders.
+
+- Modals: `Modal::init()` clears the screen, calls `schema()` and then waits for user to press Enter to return.
+
+Data files
+
+- Stored in `./data/*.csv` by the `CSV` helper. Recipes are in `./data/recipes.csv` (format: id,name,ingredients,instructions). Seeder exists to prepopulate sample recipes when file is first created.
