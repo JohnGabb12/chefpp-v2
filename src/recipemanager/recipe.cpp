@@ -8,6 +8,38 @@
 
 using namespace std;
 
+/*
+    Recipe data structure and helpers
+
+    Purpose:
+        Encapsulates a single recipe and provides utilities to
+        - display a recipe preview to the console
+        - parse ingredient lists supplied by the user
+        - serialize/deserialize recipes to/from CSV rows
+        - persist recipes to the `recipes.csv` file and load all recipes
+
+    Data contract / CSV layout:
+        Current CSV row format (4 columns):
+            [id, name, ingredients, instructions]
+
+        Legacy CSV row format (3 columns):
+            [name, ingredients, instructions]
+        The code detects legacy rows and migrates the file to include ids.
+
+    Ingredients representation:
+        Internally each ingredient is stored as a single string. The code
+        normalizes optional measurement information using a pipe-delimited
+        representation: "name|amount|unit" when amount/unit are present.
+
+        Accepted input forms for an ingredient token (when parsing user input):
+            - name
+            - name:amount:unit   (colon-separated)
+            - name|amount|unit   (pipe-separated)
+
+        When writing to CSV the ingredients vector is joined with a semicolon
+        separator into the `ingredients` field of the CSV row.
+*/
+
 struct Recipe {
 public:
     int id;                                                                // unique recipe id (1-based)
@@ -15,6 +47,19 @@ public:
     vector<string> ingredients;
     string instructions;
 
+    /*
+        Constructors
+            - Recipe()
+                Default constructor. Sets id to 0 (unknown).
+
+            - Recipe(string n, vector<string> ing, string inst)
+                Create a recipe with the given name, ingredients and
+                instructions. id remains 0 until saved.
+
+            - Recipe(int i, string n, vector<string> ing, string inst)
+                Create a recipe with an explicit id (used when loading
+                existing recipes from CSV).
+    */
     Recipe() { id = 0; }
     
     Recipe(string n, vector<string> ing, string inst) 
@@ -24,7 +69,25 @@ public:
         : id(i), name(n), ingredients(ing), instructions(inst) {}
 
     /*
-        Display recipe preview with formatted box
+        displayPreview()
+
+        Purpose:
+            Print a nicely formatted preview of this Recipe to the console.
+
+        Inputs:
+            Uses the instance fields: id, name, ingredients, instructions.
+
+        Outputs / Side-effects:
+            Writes multiple lines to the global `out` console helper. No return value.
+
+        Behavior details:
+            - Displays an optional ID when id > 0.
+            - Attempts to parse each ingredient token for measurement/unit
+              information using either '|' (preferred) or ':' separators and
+              formats the display as "- name (amount unit)" when available.
+
+        Edge cases:
+            - If ingredient tokens are not normalized, best-effort parsing is used.
     */
     void displayPreview() {
         out.coutln("+-----------------------------------------+");
@@ -96,7 +159,25 @@ public:
     }
 
     /*
-        Parse comma-separated ingredients string into vector
+        parseIngredients(string ingredientsInput)
+
+        Purpose:
+            Convert a single comma-separated ingredients string provided by
+            the user into a vector of normalized ingredient tokens.
+
+        Input:
+            - ingredientsInput: a string like
+              "salt, flour|2|cups, sugar:1:cup"
+
+        Output:
+            - vector<string> where each element is either:
+                - "name"
+                - "name|amount|unit" (pipe-delimited when amount/unit present)
+
+        Notes:
+            - The parser prefers '|' separators but will accept ':' as a
+              fallback. Empty tokens are ignored. Amounts are stored as
+              raw strings (no numeric validation).
     */
     static vector<string> parseIngredients(string ingredientsInput) {
         vector<string> result;                                             // parsed ingredients
@@ -189,7 +270,18 @@ public:
     }
 
     /*
-        Convert recipe to CSV row format
+        toCSVRow()
+
+        Purpose:
+            Serialize this Recipe into a vector of strings representing one
+            CSV row. The format used is [id, name, ingredients, instructions].
+
+        Output:
+            - vector<string> suitable for passing to CSV::write
+
+        Notes:
+            - Ingredients are joined with a semicolon (';') into a single
+              field for storage.
     */
     vector<string> toCSVRow() {
         vector<string> row;
@@ -209,7 +301,18 @@ public:
     }
 
     /*
-        Create Recipe from CSV row
+        fromCSVRow(vector<string> row)
+
+        Purpose:
+            Construct a Recipe from a CSV row vector.
+
+        Input formats supported:
+            - New format (4 cols): [id, name, ingredients, instructions]
+            - Legacy format (3 cols): [name, ingredients, instructions]
+
+        Behavior:
+            - Parses id safely (defaults to 0 on parse failure).
+            - Splits the ingredients field on ';' and trims tokens.
     */
     static Recipe fromCSVRow(vector<string> row) {
         Recipe recipe;
@@ -265,7 +368,21 @@ public:
     }
 
     /*
-        Save recipe to CSV file
+        save()
+
+        Purpose:
+            Persist this Recipe to the `recipes.csv` file.
+
+        Side-effects:
+            - Reads the entire CSV file into memory.
+            - Detects and migrates legacy 3-column rows to the 4-column
+              format by assigning sequential ids.
+            - Assigns this recipe an id (max existing id + 1) and appends
+              the row to the in-memory data, then writes the file back.
+
+        Notes / limitations:
+            - No concurrency control; simultaneous saves may conflict.
+            - Reports success/failure via console output only (no return value).
     */
     void save() {
         CSV csv("recipes.csv");                                             // open recipes CSV file
@@ -319,7 +436,19 @@ public:
     }
 
     /*
-        Load all recipes from CSV file
+        loadAll()
+
+        Purpose:
+            Read all recipes from `recipes.csv` and return them as a vector
+            of Recipe objects.
+
+        Side-effects:
+            - If legacy rows are detected, the CSV file will be migrated to
+              include ids and rewritten.
+
+        Returns:
+            - vector<Recipe> containing every non-empty row converted via
+              fromCSVRow().
     */
     static vector<Recipe> loadAll() {
         vector<Recipe> recipes;                                             // create empty recipes vector
@@ -358,9 +487,17 @@ public:
     }
 
     /*
-        Find and return a recipe by its id
-            - Loads all recipes and returns the one matching the id
-            - Returns empty Recipe() if not found
+        findById(int rid)
+
+        Purpose:
+            Locate and return a Recipe with the specified id.
+
+        Behavior:
+            - Loads all recipes (via loadAll()) and performs a linear search.
+            - Returns the matching Recipe if found, otherwise returns a
+              default Recipe() with id == 0.
+
+        Complexity: O(N) where N is the number of recipes on disk.
     */
     static Recipe findById(int rid) {
         vector<Recipe> all = loadAll();                                    // load all recipes
@@ -373,7 +510,19 @@ public:
     }
 
     /*
-        Delete recipe by id from CSV file
+        deleteById(int id)
+
+        Purpose:
+            Remove the recipe with the given id from the CSV file.
+
+        Behavior / Side-effects:
+            - Reads all rows, filters out the matching row by parsing the
+              first column as an integer, and writes the filtered data back.
+            - Returns true if a row was found and deleted, false otherwise.
+
+        Notes:
+            - Malformed id fields are treated as 0 and won't match typical
+              positive ids. No concurrency handling is provided.
     */
     static bool deleteById(int id) {
         CSV csv("recipes.csv");                                             // open recipes CSV file
