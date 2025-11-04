@@ -52,3 +52,22 @@ How the flow works
 Data files
 
 - Stored in `./data/*.csv` by the `CSV` helper. Recipes are in `./data/recipes.csv` (format: id,name,ingredients,instructions). Seeder exists to prepopulate sample recipes when file is first created.
+
+
+
+Instructions when changed
+
+use `git diff` to check what changed. (press q to exit)
+
+example:
+-   Recipe() { id = 0; }            <- deleted
++   Recipe(int id) { id = id }      <- added
+
+use `git status` to see what files changed.
+
+use `git restore .` to delete changes.
+
+Colors at the left of the code line indicates:
+- Green : The line is added.
+- Orange : The line is changed.
+- Red (arrow) : The line is deleted.
