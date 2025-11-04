@@ -54,7 +54,6 @@ Data files
 - Stored in `./data/*.csv` by the `CSV` helper. Recipes are in `./data/recipes.csv` (format: id,name,ingredients,instructions). Seeder exists to prepopulate sample recipes when file is first created.
 
 
-
 Instructions when changed
 
 use `git diff` to check what changed. (press q to exit)
@@ -71,3 +70,9 @@ Colors at the left of the code line indicates:
 - Green : The line is added.
 - Orange : The line is changed.
 - Red (arrow) : The line is deleted.
+
+
+To build the project.
+- Press "Ctrl + Shift + B".
+- The project will be in ./build folder
+- `explorer build` to open the folder in file explorer.
