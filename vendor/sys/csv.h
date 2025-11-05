@@ -32,6 +32,7 @@ using namespace std;
     #include <fstream>
     #include <sstream>
     #include <algorithm>
+    #include "../database/seeder.h"
 
     CSV:
         private:
