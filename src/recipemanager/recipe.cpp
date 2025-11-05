@@ -199,14 +199,14 @@ public:
                     string unitToken = "";
 
                     // Prefer '|' separation if present
-                    int p1 = -1; int p2 = -1;
-                    for (int j = 0; j < token.length(); j++) { if (token[j] == '|') { p1 = j; break; } }
-                    if (p1 != -1) { for (int j = p1 + 1; j < token.length(); j++) { if (token[j] == '|') { p2 = j; break; } } }
+                    int p1 = -1; int p2 = -1; //    init
+                    for (int j = 0; j < token.length(); j++) { if (token[j] == '|') { p1 = j; break; } } // find first '|' index
+                    if (p1 != -1) { for (int j = p1 + 1; j < token.length(); j++) { if (token[j] == '|') { p2 = j; break; } } } // find second '|' index
 
                     if (p1 != -1 && p2 != -1) {
-                        nameToken = out.trim(token.substr(0, p1));
-                        amountToken = out.trim(token.substr(p1 + 1, p2 - p1 - 1));
-                        unitToken = out.trim(token.substr(p2 + 1));
+                        nameToken = out.trim(token.substr(0, p1)); // get first index
+                        amountToken = out.trim(token.substr(p1 + 1, p2 - p1 - 1)); // get second index
+                        unitToken = out.trim(token.substr(p2 + 1)); // get third index
                     } else {
                         // Fallback to ':' separation
                         int c1 = -1; int c2 = -1;
@@ -290,7 +290,7 @@ public:
         
         // Join ingredients with semicolon separator
         string ingredientsStr = "";
-        for (size_t i = 0; i < ingredients.size(); i++) {
+        for (int i = 0; i < ingredients.size(); i++) {
             if (i > 0) ingredientsStr += ";";                               // add semicolon separator
             ingredientsStr += ingredients[i];                               // add ingredient
         }
