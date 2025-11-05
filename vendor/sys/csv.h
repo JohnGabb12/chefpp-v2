@@ -8,7 +8,7 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
-#include "../../src/recipemanager/seeder.h"
+#include "../database/seeder.h"
 
 using namespace std;
 
